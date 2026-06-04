@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(git --version)",
+      "Bash(npx --yes create-next-app@latest . --ts --tailwind --app --src-dir --import-alias \"@/*\" --use-npm --eslint --no-turbopack --skip-install --yes)",
+      "Bash(mv memory *)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(mv ../_prono_memory_tmp memory)"
+    ]
+  }
+}
