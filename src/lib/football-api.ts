@@ -43,10 +43,18 @@ type ApiMatch = {
   status: string;
   stage: string;
   group: string | null;
+  minute: number | string | null; // minute de jeu (matchs en cours)
   homeTeam: ApiTeam;
   awayTeam: ApiTeam;
   score: { fullTime: { home: number | null; away: number | null } };
 };
+
+/** Minute de jeu en cours, ou null (hors match en direct / absente de l'API). */
+function parseMinute(m: ApiMatch, status: string): number | null {
+  if (status !== MATCH_STATUS.LIVE) return null;
+  const n = Number(m.minute);
+  return Number.isFinite(n) && n >= 0 && n <= 130 ? Math.floor(n) : null;
+}
 
 export type SyncResult = {
   teams: number;
@@ -124,6 +132,7 @@ export async function syncFromFootballData(): Promise<SyncResult> {
     if (m.awayTeam) seenTeams.add(String(m.awayTeam.id));
 
     const status = mapStatus(m.status);
+    const liveMinute = parseMinute(m, status);
     const saved = await prisma.match.upsert({
       where: { externalId: String(m.id) },
       update: {
@@ -131,6 +140,7 @@ export async function syncFromFootballData(): Promise<SyncResult> {
         groupName: parseGroup(m.group),
         kickoff: new Date(m.utcDate),
         status,
+        liveMinute,
         homeTeamId: homeId,
         awayTeamId: awayId,
         homeScore: m.score.fullTime.home,
@@ -142,6 +152,7 @@ export async function syncFromFootballData(): Promise<SyncResult> {
         groupName: parseGroup(m.group),
         kickoff: new Date(m.utcDate),
         status,
+        liveMinute,
         homeTeamId: homeId,
         awayTeamId: awayId,
         homeScore: m.score.fullTime.home,
