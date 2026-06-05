@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { dayKey, formatDayLabel, formatTime } from "@/lib/format";
+import { teamColor } from "@/lib/teamColor";
 import { STAGE_LABELS, MATCH_STATUS, STAGES, type Stage } from "@/lib/constants";
 import Reveal from "@/components/Reveal";
 import Flag from "@/components/Flag";
@@ -84,12 +85,22 @@ function MatchRow({ match: m }: { match: MatchWithTeams }) {
       ? `Groupe ${m.groupName ?? ""}`.trim()
       : (STAGE_LABELS[m.stage as Stage] ?? m.stage);
 
+  const bothTeams = !!m.homeTeam && !!m.awayTeam;
   return (
     <li className="min-w-0">
       <Link
         href={`/matchs/${m.id}`}
-        className="card-hover glass flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm"
+        className="card-hover glass relative flex items-center gap-3 overflow-hidden rounded-xl px-3 py-2.5 text-sm"
       >
+        {bothTeams && (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-0.5"
+            style={{
+              background: `linear-gradient(90deg, ${teamColor(m.homeTeam!.code)}, ${teamColor(m.awayTeam!.code)})`,
+            }}
+          />
+        )}
         <span className="w-12 shrink-0 font-mono text-xs text-slate-400">
           {formatTime(m.kickoff)}
         </span>

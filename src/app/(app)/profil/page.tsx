@@ -253,7 +253,7 @@ function Stat({
 }) {
   return (
     <div className="glass rounded-2xl p-4 text-center">
-      <div className="font-display text-2xl font-extrabold text-emerald-400">
+      <div className="scoreboard font-display text-2xl font-extrabold text-emerald-400">
         {value}
       </div>
       <div className="mt-1 text-xs text-slate-400">{label}</div>
