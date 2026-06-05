@@ -1,3 +1,4 @@
+import { type CSSProperties } from "react";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -168,7 +169,14 @@ export default async function MatchsPage({
             return (
               <li key={m.id} className="min-w-0">
                 <Reveal delay={Math.min(i * 0.03, 0.3)}>
-                  <div className="card-hover glass relative overflow-hidden rounded-2xl p-4">
+                  <div
+                    className="card-accent glass relative overflow-hidden rounded-2xl p-4"
+                    style={
+                      bothTeams
+                        ? ({ "--accent": teamColor(home.code) } as CSSProperties)
+                        : undefined
+                    }
+                  >
                     {bothTeams && (
                       <>
                         <div

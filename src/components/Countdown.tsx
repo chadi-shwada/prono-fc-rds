@@ -55,7 +55,7 @@ export default function Countdown({ target }: { target: string }) {
             key={label}
             className="flex min-w-[58px] flex-col items-center rounded-xl border border-white/10 bg-white/5 px-2 py-2.5"
           >
-            <span className="font-display text-2xl font-extrabold tabular-nums text-white sm:text-3xl">
+            <span className="scoreboard font-display text-2xl font-extrabold tabular-nums text-white sm:text-3xl">
               {String(value).padStart(2, "0")}
             </span>
             <span className="text-[10px] uppercase tracking-wide text-slate-400">

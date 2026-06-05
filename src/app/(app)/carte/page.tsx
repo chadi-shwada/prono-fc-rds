@@ -1,9 +1,11 @@
+import { type CSSProperties } from "react";
 import Reveal from "@/components/Reveal";
 import HostMap from "@/components/HostMap";
 import Flag from "@/components/Flag";
 import { prisma } from "@/lib/prisma";
 import { HOST_CITIES } from "@/lib/hostCities";
 import { formatDateShort, formatTime } from "@/lib/format";
+import { teamColor } from "@/lib/teamColor";
 import { STAGE_LABELS, STAGES, type Stage } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -71,8 +73,14 @@ export default async function CartePage() {
           >
             <div
               id={`city-${c.id}`}
-              className="card-hover glass scroll-mt-24 rounded-2xl p-4"
+              className="card-accent glass relative scroll-mt-24 overflow-hidden rounded-2xl p-4"
+              style={{ "--accent": teamColor(c.countryCode) } as CSSProperties}
             >
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 top-0 h-0.5"
+                style={{ background: teamColor(c.countryCode) }}
+              />
               <div className="flex items-center gap-3">
                 <Flag code={c.countryCode} size={34} />
                 <div className="flex-1">

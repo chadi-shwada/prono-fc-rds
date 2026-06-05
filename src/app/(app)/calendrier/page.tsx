@@ -1,3 +1,4 @@
+import { type CSSProperties } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { dayKey, formatDayLabel, formatTime } from "@/lib/format";
@@ -90,7 +91,12 @@ function MatchRow({ match: m }: { match: MatchWithTeams }) {
     <li className="min-w-0">
       <Link
         href={`/matchs/${m.id}`}
-        className="card-hover glass relative flex items-center gap-3 overflow-hidden rounded-xl px-3 py-2.5 text-sm"
+        className="card-accent glass relative flex items-center gap-3 overflow-hidden rounded-xl px-3 py-2.5 text-sm"
+        style={
+          bothTeams
+            ? ({ "--accent": teamColor(m.homeTeam!.code) } as CSSProperties)
+            : undefined
+        }
       >
         {bothTeams && (
           <span

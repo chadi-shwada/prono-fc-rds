@@ -197,6 +197,19 @@ body {
   letter-spacing: 0.5px;
 }
 
+/* Survol avec glow à la couleur de l'équipe (via --accent) */
+.card-accent {
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.card-accent:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--accent, #ffffff) 45%, transparent);
+  box-shadow: 0 14px 34px -14px color-mix(in srgb, var(--accent, #ffffff) 55%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .aurora::before,
   .aurora::after,
