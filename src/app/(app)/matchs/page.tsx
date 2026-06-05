@@ -170,13 +170,22 @@ export default async function MatchsPage({
                 <Reveal delay={Math.min(i * 0.03, 0.3)}>
                   <div className="card-hover glass relative overflow-hidden rounded-2xl p-4">
                     {bothTeams && (
-                      <div
-                        aria-hidden
-                        className="pointer-events-none absolute inset-0 opacity-[0.12]"
-                        style={{
-                          background: `linear-gradient(105deg, ${teamColor(home.code)}, transparent 42%, transparent 58%, ${teamColor(away.code)})`,
-                        }}
-                      />
+                      <>
+                        <div
+                          aria-hidden
+                          className="pointer-events-none absolute inset-0 opacity-[0.16]"
+                          style={{
+                            background: `linear-gradient(105deg, ${teamColor(home.code)}, transparent 42%, transparent 58%, ${teamColor(away.code)})`,
+                          }}
+                        />
+                        <div
+                          aria-hidden
+                          className="pointer-events-none absolute inset-x-0 top-0 h-[3px]"
+                          style={{
+                            background: `linear-gradient(90deg, ${teamColor(home.code)}, ${teamColor(away.code)})`,
+                          }}
+                        />
+                      </>
                     )}
                     <div className="relative">
                     <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs text-slate-400">

@@ -73,13 +73,22 @@ export default async function MatchDetailPage({
       <Reveal delay={0.05}>
         <div className="glass relative overflow-hidden rounded-2xl p-6">
           {match.homeTeam && match.awayTeam && (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 opacity-[0.14]"
-              style={{
-                background: `linear-gradient(105deg, ${teamColor(match.homeTeam.code)}, transparent 42%, transparent 58%, ${teamColor(match.awayTeam.code)})`,
-              }}
-            />
+            <>
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 opacity-[0.18]"
+                style={{
+                  background: `linear-gradient(105deg, ${teamColor(match.homeTeam.code)}, transparent 42%, transparent 58%, ${teamColor(match.awayTeam.code)})`,
+                }}
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 top-0 h-1"
+                style={{
+                  background: `linear-gradient(90deg, ${teamColor(match.homeTeam.code)}, ${teamColor(match.awayTeam.code)})`,
+                }}
+              />
+            </>
           )}
           <div className="relative">
           <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs text-slate-400">

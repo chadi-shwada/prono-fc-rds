@@ -115,7 +115,7 @@ export default function LiveLeaderboard({
                     {r.predictions} prono{r.predictions > 1 ? "s" : ""}
                   </span>
                 </span>
-                <span className="w-16 text-right font-display text-xl font-extrabold text-emerald-400">
+                <span className="scoreboard w-16 text-right font-display text-xl font-extrabold text-emerald-400">
                   {r.points}
                 </span>
               </div>

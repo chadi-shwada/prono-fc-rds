@@ -52,6 +52,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <div className="aurora" />
+        <div className="pitch" />
         {children}
       </body>
     </html>

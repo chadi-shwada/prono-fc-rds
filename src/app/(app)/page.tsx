@@ -59,6 +59,17 @@ export default async function HomePage() {
         <p className="mt-2 text-slate-400">
           Prêt à pronostiquer la Coupe du Monde 2026 ?
         </p>
+        <div className="mt-3 inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs">
+          <span className="font-display font-bold text-amber-300">
+            Coupe du Monde 2026
+          </span>
+          <span className="h-3 w-px bg-white/15" />
+          <span className="flex items-center gap-1">
+            <Flag code="USA" size={18} className="shrink-0" />
+            <Flag code="CAN" size={18} className="shrink-0" />
+            <Flag code="MEX" size={18} className="shrink-0" />
+          </span>
+        </div>
       </Reveal>
 
       {liveMatches.length > 0 && (
@@ -182,7 +193,7 @@ function Stat({
 }) {
   return (
     <div className="glass rounded-2xl p-4 text-center">
-      <div className="font-display text-3xl font-extrabold text-emerald-400">
+      <div className="scoreboard font-display text-3xl font-extrabold text-emerald-400">
         {value}
       </div>
       <div className="mt-1 text-xs text-slate-400">{label}</div>
