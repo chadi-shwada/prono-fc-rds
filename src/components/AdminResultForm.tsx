@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Flag from "@/components/Flag";
 import ScoreInput from "@/components/ScoreInput";
 import { setResultAction, type AdminState } from "@/app/actions/admin";
@@ -19,10 +19,19 @@ type Props = {
 };
 
 const STATUS_OPTIONS = [
-  { value: MATCH_STATUS.SCHEDULED, label: "Programmé" },
-  { value: MATCH_STATUS.LIVE, label: "🔴 En direct" },
-  { value: MATCH_STATUS.FINISHED, label: "Terminé" },
+  { value: MATCH_STATUS.SCHEDULED, label: "Programmé", live: false },
+  { value: MATCH_STATUS.LIVE, label: "En direct", live: true },
+  { value: MATCH_STATUS.FINISHED, label: "Terminé", live: false },
 ] as const;
+
+function StatusLabel({ label, live }: { label: string; live: boolean }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      {live && <span className="h-1.5 w-1.5 rounded-full bg-red-400" />}
+      {label}
+    </span>
+  );
+}
 
 export default function AdminResultForm({
   matchId,
@@ -38,11 +47,28 @@ export default function AdminResultForm({
     undefined,
   );
   const [status, setStatus] = useState(initialStatus);
+  const [open, setOpen] = useState(false);
+  const ddRef = useRef<HTMLDivElement>(null);
   const isLive = status === MATCH_STATUS.LIVE;
+  const current =
+    STATUS_OPTIONS.find((o) => o.value === status) ?? STATUS_OPTIONS[0];
+
+  // Fermer le menu au clic en dehors.
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ddRef.current && !ddRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
 
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="matchId" value={matchId} />
+      <input type="hidden" name="status" value={status} />
       <span className="flex min-w-0 flex-1 items-center justify-end gap-2 text-right text-sm">
         <span className="truncate">{home.name}</span>
         <Flag code={home.code} size={26} className="shrink-0" />
@@ -55,19 +81,44 @@ export default function AdminResultForm({
         <span className="truncate">{away.name}</span>
       </span>
 
-      <select
-        name="status"
-        value={status}
-        onChange={(e) => setStatus(e.target.value)}
-        aria-label="Statut du match"
-        className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs text-slate-200 outline-none transition focus:border-emerald-400"
-      >
-        {STATUS_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value} className="bg-slate-900">
-            {o.label}
-          </option>
-        ))}
-      </select>
+      {/* Sélecteur de statut au design de l'app */}
+      <div ref={ddRef} className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-label="Statut du match"
+          className="flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-200 outline-none transition hover:border-white/25 focus:border-emerald-400"
+        >
+          <StatusLabel label={current.label} live={current.live} />
+          <span className="text-slate-500">▾</span>
+        </button>
+        {open && (
+          <div
+            role="listbox"
+            className="absolute right-0 z-30 mt-1 min-w-[8.5rem] overflow-hidden rounded-lg border border-white/10 bg-slate-900/95 py-1 shadow-xl shadow-black/40 backdrop-blur"
+          >
+            {STATUS_OPTIONS.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                role="option"
+                aria-selected={o.value === status}
+                onClick={() => {
+                  setStatus(o.value);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center px-3 py-1.5 text-left text-xs transition hover:bg-white/10 ${
+                  o.value === status ? "bg-white/5 text-white" : "text-slate-300"
+                }`}
+              >
+                <StatusLabel label={o.label} live={o.live} />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {isLive && (
         <label className="flex items-center gap-1.5 text-xs text-red-300">
