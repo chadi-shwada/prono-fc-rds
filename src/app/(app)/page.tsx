@@ -8,6 +8,7 @@ import Reveal from "@/components/Reveal";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import Countdown from "@/components/Countdown";
 import Flag from "@/components/Flag";
+import Avatar from "@/components/Avatar";
 import LiveBadge from "@/components/LiveBadge";
 import LiveScore from "@/components/LiveScore";
 import LiveRefresher from "@/components/LiveRefresher";
@@ -44,11 +45,16 @@ export default async function HomePage() {
     <div className="flex flex-col gap-6">
       {liveMatches.length > 0 && <LiveRefresher />}
       <Reveal>
-        <p className="text-sm font-medium text-emerald-400">Bienvenue 👋</p>
-        <h1 className="font-display text-4xl font-extrabold">
-          Salut <span className="text-gradient capitalize">{user.name}</span>
-        </h1>
-        <p className="mt-1 text-slate-400">
+        <div className="flex items-center gap-4">
+          <Avatar name={user.name} size={56} />
+          <div>
+            <p className="text-sm font-medium text-emerald-400">Bienvenue 👋</p>
+            <h1 className="font-display text-4xl font-extrabold">
+              Salut <span className="text-gradient capitalize">{user.name}</span>
+            </h1>
+          </div>
+        </div>
+        <p className="mt-2 text-slate-400">
           Prêt à pronostiquer la Coupe du Monde 2026 ?
         </p>
       </Reveal>
@@ -58,7 +64,7 @@ export default async function HomePage() {
           <section className="rounded-2xl border border-red-400/30 bg-gradient-to-br from-red-500/[0.12] to-transparent p-4">
             <div className="mb-3 flex items-center gap-2">
               <LiveBadge />
-              <h2 className="font-display text-lg font-bold">En direct maintenant</h2>
+              <h2 className="font-display text-lg font-bold">Ça joue en ce moment ⚽</h2>
             </div>
             <ul className="flex flex-col gap-2">
               {liveMatches.map((m) => (

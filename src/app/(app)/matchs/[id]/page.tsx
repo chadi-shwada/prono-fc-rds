@@ -9,6 +9,7 @@ import Flag from "@/components/Flag";
 import LiveBadge from "@/components/LiveBadge";
 import LiveScore from "@/components/LiveScore";
 import LiveRefresher from "@/components/LiveRefresher";
+import Avatar from "@/components/Avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -132,11 +133,14 @@ export default async function MatchDetailPage({
                         : "border-white/10 bg-white/5"
                     }`}
                   >
-                    <span className="flex-1 font-medium capitalize">
-                      {p.user.name}
-                      {me && (
-                        <span className="ml-2 text-xs text-emerald-400">(toi)</span>
-                      )}
+                    <span className="flex min-w-0 flex-1 items-center gap-2.5 font-medium">
+                      <Avatar name={p.user.name} size={28} />
+                      <span className="truncate capitalize">
+                        {p.user.name}
+                        {me && (
+                          <span className="ml-2 text-xs text-emerald-400">(toi)</span>
+                        )}
+                      </span>
                     </span>
                     <span className="font-display text-lg font-bold tabular-nums">
                       {p.homeScore} - {p.awayScore}

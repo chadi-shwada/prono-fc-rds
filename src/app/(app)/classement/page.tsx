@@ -2,14 +2,16 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getLeaderboard, type LeaderboardRow } from "@/lib/leaderboard";
+import { getPlayerOfTheDay } from "@/lib/dailyAward";
 import { dayKey, formatDayLabel } from "@/lib/format";
 import { MATCH_STATUS } from "@/lib/constants";
 import Reveal from "@/components/Reveal";
-import AnimatedBar from "@/components/AnimatedBar";
+import Avatar from "@/components/Avatar";
+import LiveLeaderboard from "@/components/LiveLeaderboard";
+import LiveRefresher from "@/components/LiveRefresher";
 
 export const dynamic = "force-dynamic";
 
-const MEDALS = ["🥇", "🥈", "🥉"];
 const chipFmt = new Intl.DateTimeFormat("fr-FR", {
   day: "numeric",
   month: "short",
@@ -46,6 +48,9 @@ export default async function ClassementPage({
 
   const days = [...new Set(finished.map((m) => dayKey(m.kickoff)))];
   const activeDay = jour && days.includes(jour) ? jour : null;
+  const playerOfDay = await getPlayerOfTheDay();
+  const hasLive =
+    (await prisma.match.count({ where: { status: MATCH_STATUS.LIVE } })) > 0;
 
   let rows: LeaderboardRow[];
   let subtitle: string;
@@ -84,14 +89,38 @@ export default async function ClassementPage({
     subtitle = "Qui sera le meilleur pronostiqueur ? 🏆";
   }
 
-  const topScore = rows[0]?.points || 1;
-
   return (
     <div className="flex flex-col gap-6">
+      {hasLive && <LiveRefresher />}
       <Reveal>
         <h1 className="font-display text-3xl font-extrabold">Classement</h1>
         <p className="text-slate-400">{subtitle}</p>
       </Reveal>
+
+      {playerOfDay && (
+        <Reveal delay={0.03}>
+          <section className="glow-gold flex items-center gap-3 rounded-2xl border border-amber-300/30 bg-gradient-to-br from-amber-300/10 to-transparent p-4">
+            <span className="float text-3xl leading-none">👑</span>
+            <Avatar name={playerOfDay.name} size={40} />
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-semibold uppercase tracking-wide text-amber-300">
+                Joueur du jour
+              </div>
+              <div className="truncate font-display text-lg font-extrabold capitalize">
+                {playerOfDay.name}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="font-display text-xl font-extrabold text-amber-300">
+                +{playerOfDay.points}
+              </div>
+              <div className="text-[10px] uppercase tracking-wide text-slate-400">
+                {playerOfDay.dayLabel}
+              </div>
+            </div>
+          </section>
+        </Reveal>
+      )}
 
       {days.length > 0 && (
         <Reveal delay={0.04}>
@@ -114,65 +143,12 @@ export default async function ClassementPage({
           Aucun point sur cette journée pour l&apos;instant.
         </p>
       ) : (
-        <ol className="flex flex-col gap-2.5">
-          {rows.map((r, i) => {
-            const me = r.userId === user.id;
-            const isTop3 = i < 3;
-            const width = Math.max(8, Math.round((r.points / topScore) * 100));
-            return (
-              <li key={r.userId}>
-                <Reveal delay={Math.min(i * 0.05, 0.5)} y={12}>
-                  <div
-                    className={`relative overflow-hidden rounded-2xl border px-4 py-3.5 ${
-                      i === 0
-                        ? "glow-gold border-amber-300/40 bg-amber-300/[0.07]"
-                        : me
-                          ? "border-emerald-400/50 bg-emerald-400/10"
-                          : isTop3
-                            ? "border-amber-300/25 bg-amber-300/[0.04]"
-                            : "border-white/10 bg-white/5"
-                    }`}
-                  >
-                    <AnimatedBar width={width} delay={Math.min(i * 0.05, 0.5)} />
-                    <div className="relative flex items-center gap-3">
-                      <span
-                        className={`w-9 text-center font-display text-xl font-extrabold ${
-                          i === 0 ? "float inline-block" : ""
-                        }`}
-                      >
-                        {MEDALS[i] ?? i + 1}
-                      </span>
-                      <span className="flex-1 font-semibold capitalize">
-                        {r.name}
-                        {me && (
-                          <span className="ml-2 text-xs font-medium text-emerald-400">
-                            (toi)
-                          </span>
-                        )}
-                      </span>
-                      <span className="hidden text-xs text-slate-400 sm:flex sm:items-center sm:gap-2">
-                        {r.exactScores > 0 && (
-                          <span
-                            className="rounded-full bg-amber-400/15 px-2 py-0.5 font-medium text-amber-300"
-                            title="Scores exacts"
-                          >
-                            🎯 {r.exactScores}
-                          </span>
-                        )}
-                        <span>
-                          {r.predictions} prono{r.predictions > 1 ? "s" : ""}
-                        </span>
-                      </span>
-                      <span className="w-16 text-right font-display text-xl font-extrabold text-emerald-400">
-                        {r.points}
-                      </span>
-                    </div>
-                  </div>
-                </Reveal>
-              </li>
-            );
-          })}
-        </ol>
+        <LiveLeaderboard
+          key={activeDay ?? "general"}
+          rows={rows}
+          meId={user.id}
+          showDelta={!activeDay}
+        />
       )}
     </div>
   );
