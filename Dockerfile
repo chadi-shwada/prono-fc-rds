@@ -7,14 +7,19 @@ RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 # --- Dépendances ---
 FROM base AS deps
 COPY package.json package-lock.json ./
-RUN npm ci
+# npm install (et non npm ci) : le lockfile peut être généré sous Windows et
+# manquer des dépendances optionnelles propres à Linux (ex. @emnapi/* via sharp).
+RUN npm install --no-audit --no-fund
 
 # --- Build ---
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate
-RUN npm run build
+# Mini-base SQLite temporaire (avec le schéma) : le build pré-rend certaines pages
+# qui interrogent la base (ex. /login), il faut donc une DATABASE_URL valide.
+RUN DATABASE_URL="file:/tmp/build.db" npx prisma migrate deploy
+RUN DATABASE_URL="file:/tmp/build.db" npm run build
 
 # --- Runtime ---
 FROM base AS runner
