@@ -1,0 +1,58 @@
+// Noms d'équipes en français, par code FIFA (l'API les fournit en anglais).
+
+const FR_NAMES: Record<string, string> = {
+  ALG: "Algérie",
+  ARG: "Argentine",
+  AUS: "Australie",
+  AUT: "Autriche",
+  BEL: "Belgique",
+  BIH: "Bosnie-Herzégovine",
+  BRA: "Brésil",
+  CAN: "Canada",
+  CPV: "Cap-Vert",
+  COL: "Colombie",
+  COD: "RD Congo",
+  CRO: "Croatie",
+  CUW: "Curaçao",
+  CZE: "Tchéquie",
+  ECU: "Équateur",
+  EGY: "Égypte",
+  ENG: "Angleterre",
+  FRA: "France",
+  GER: "Allemagne",
+  GHA: "Ghana",
+  HAI: "Haïti",
+  IRN: "Iran",
+  IRQ: "Irak",
+  CIV: "Côte d'Ivoire",
+  JPN: "Japon",
+  JOR: "Jordanie",
+  MEX: "Mexique",
+  MAR: "Maroc",
+  NED: "Pays-Bas",
+  NZL: "Nouvelle-Zélande",
+  NOR: "Norvège",
+  PAN: "Panama",
+  PAR: "Paraguay",
+  POR: "Portugal",
+  QAT: "Qatar",
+  KSA: "Arabie saoudite",
+  SCO: "Écosse",
+  SEN: "Sénégal",
+  RSA: "Afrique du Sud",
+  KOR: "Corée du Sud",
+  ESP: "Espagne",
+  SWE: "Suède",
+  SUI: "Suisse",
+  TUN: "Tunisie",
+  TUR: "Turquie",
+  USA: "États-Unis",
+  URY: "Uruguay",
+  UZB: "Ouzbékistan",
+};
+
+/** Nom français d'une équipe à partir de son code FIFA (repli : nom fourni). */
+export function teamNameFr(code?: string | null, fallback = ""): string {
+  if (code && FR_NAMES[code.toUpperCase()]) return FR_NAMES[code.toUpperCase()];
+  return fallback;
+}

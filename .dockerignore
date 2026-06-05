@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.gitignore
+*.md
+.env
+.env.*
+!.env.production.example
+prisma/*.db
+prisma/*.db-journal
+.vercel
+npm-debug.log*
+.DS_Store

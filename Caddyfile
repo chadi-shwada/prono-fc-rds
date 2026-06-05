@@ -1,0 +1,8 @@
+# Caddy obtient et renouvelle automatiquement le certificat HTTPS (Let's Encrypt)
+# pour ton domaine. Il suffit que le DNS du domaine pointe vers l'IP du serveur
+# et que les ports 80 et 443 soient ouverts.
+
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy app:3000
+}

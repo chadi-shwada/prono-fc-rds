@@ -1,26 +1,181 @@
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import "flag-icons/css/flag-icons.min.css";
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-display);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: #f1f5f9;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  background: #060a13;
+}
+
+/* ---------- Fond animé : aurores dégradées ---------- */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background:
+    radial-gradient( at 50% 0%, rgba(16, 185, 129, 0.08), transparent 50%),
+    #060a13;
+}
+.aurora::before,
+.aurora::after {
+  content: "";
+  position: absolute;
+  width: 50vmax;
+  height: 50vmax;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.55;
+  will-change: transform;
+}
+.aurora::before {
+  background: radial-gradient(circle, #10b981 0%, transparent 70%);
+  top: -10%;
+  left: -10%;
+  animation: drift1 22s ease-in-out infinite alternate;
+}
+.aurora::after {
+  background: radial-gradient(circle, #0ea5e9 0%, transparent 70%);
+  bottom: -15%;
+  right: -10%;
+  animation: drift2 26s ease-in-out infinite alternate;
+}
+
+@keyframes drift1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(20vw, 18vh) scale(1.25); }
+}
+@keyframes drift2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-18vw, -12vh) scale(1.3); }
+}
+
+/* Dégradé de texte animé pour les titres */
+.text-gradient {
+  background: linear-gradient(100deg, #34d399, #38bdf8, #a78bfa, #34d399);
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shine 6s linear infinite;
+}
+@keyframes shine {
+  to { background-position: 250% center; }
+}
+
+/* Carte verre dépoli */
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+/* Petit brillant qui traverse (effet "shimmer" au survol) */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.7s;
+}
+.shimmer:hover::after {
+  transform: translateX(100%);
+}
+
+/* Soulèvement au survol des cartes interactives */
+.card-hover {
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.6);
+}
+
+/* Élément qui flotte doucement (trophées) */
+.float {
+  animation: float 4s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Ballons/coupes décoratifs qui flottent SUR PLACE (pas de traversée d'écran) */
+.particle-float {
+  display: inline-block;
+  animation: pFloat ease-in-out infinite alternate;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+  will-change: transform;
+}
+@keyframes pFloat {
+  from {
+    transform: translate(-9px, 6px) rotate(-9deg);
+  }
+  to {
+    transform: translate(9px, -12px) rotate(9deg);
+  }
+}
+
+/* Bandeau de drapeaux défilant */
+.marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 12%,
+    #000 88%,
+    transparent
+  );
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.marquee-track {
+  animation: marquee 32s linear infinite;
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Halo doré pulsé (1er du classement, vainqueur) */
+.glow-gold {
+  animation: glowGold 2.6s ease-in-out infinite;
+}
+@keyframes glowGold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+  50% { box-shadow: 0 0 22px -2px rgba(251, 191, 36, 0.45); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before,
+  .aurora::after,
+  .text-gradient,
+  .float,
+  .glow-gold,
+  .marquee-track,
+  .particle-float {
+    animation: none;
+  }
+  .card-hover:hover {
+    transform: none;
+  }
 }

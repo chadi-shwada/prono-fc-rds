@@ -1,0 +1,125 @@
+// Schéma de données — Pronos Coupe du Monde 2026 (privé RATP)
+// SQLite en local ; bascule Postgres pour le déploiement (changer provider + DATABASE_URL).
+// Pas d'enum natif (non supporté par SQLite) → on utilise des String + constantes côté TS
+// (voir src/lib/constants.ts).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Un collègue participant. L'identité sert au classement.
+model User {
+  id           String   @id @default(cuid())
+  name         String   @unique // pseudo affiché
+  passwordHash String? // plus utilisé (connexion par pseudo + code)
+  isAdmin      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  sessions            Session[]
+  predictions         Prediction[]
+  championPrediction  ChampionPrediction?
+}
+
+/// Session de connexion (cookie -> token).
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+/// Code d'invitation permettant de s'inscrire (réservé aux collègues).
+model InviteCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  label     String? // ex: "Équipe data RATP"
+  active    Boolean  @default(true)
+  maxUses   Int? // null = illimité
+  uses      Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+/// Équipe nationale.
+model Team {
+  id         String  @id @default(cuid())
+  externalId String? @unique // id côté API foot
+  name       String  @unique
+  code       String  @unique // code FIFA 3 lettres, ex: FRA
+  flag       String? // emoji drapeau
+  groupName  String? // ex: "A" (phase de groupes)
+
+  homeMatches        Match[]              @relation("HomeTeam")
+  awayMatches        Match[]              @relation("AwayTeam")
+  championPredictions ChampionPrediction[]
+}
+
+/// Un match du tournoi.
+model Match {
+  id         String   @id @default(cuid())
+  externalId String?  @unique // id côté API foot
+  stage      String // GROUP, R32, R16, QF, SF, THIRD, FINAL (voir constants.ts)
+  groupName  String? // pour la phase de groupes
+  kickoff    DateTime // coup d'envoi (verrouillage des pronos)
+  status     String   @default("SCHEDULED") // SCHEDULED, LIVE, FINISHED
+
+  homeTeamId String?
+  awayTeamId String?
+  homeTeam   Team?   @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam   Team?   @relation("AwayTeam", fields: [awayTeamId], references: [id])
+
+  // Score au temps réglementaire (base du calcul des points).
+  // En statut LIVE, ces champs portent le score en cours.
+  homeScore Int?
+  awayScore Int?
+
+  // Minute de jeu affichée pendant un match LIVE (ex: 45). null si inconnu.
+  liveMinute Int?
+
+  // Ville hôte (id d'une HOST_CITIES) — importé du calendrier officiel
+  venueCity String?
+
+  predictions Prediction[]
+  updatedAt   DateTime     @updatedAt
+
+  @@index([kickoff])
+  @@index([stage])
+}
+
+/// Pronostic d'un utilisateur sur un match (score au temps réglementaire).
+model Prediction {
+  id        String  @id @default(cuid())
+  userId    String
+  matchId   String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match     Match   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  homeScore Int
+  awayScore Int
+  points    Int? // null tant que le match n'est pas terminé/calculé
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, matchId])
+  @@index([matchId])
+}
+
+/// Prono du vainqueur final (saisi avant le 1er match) — bonus.
+model ChampionPrediction {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  teamId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team     @relation(fields: [teamId], references: [id])
+  points    Int? // crédité quand le champion est connu
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -1,0 +1,111 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import confetti from "canvas-confetti";
+import Flag from "@/components/Flag";
+
+const SECRET = "senegal";
+const SN_COLORS = ["#00853F", "#FDEF42", "#E31B23"]; // vert, jaune, rouge
+
+// Easter egg : taper « senegal » au clavier déclenche une vanne amicale 🦁
+export default function SenegalEasterEgg() {
+  const [open, setOpen] = useState(false);
+  const buffer = useRef("");
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.length !== 1) return;
+      const c = e.key.toLowerCase().replace(/[éèê]/g, "e");
+      if (!/[a-z]/.test(c)) return;
+      buffer.current = (buffer.current + c).slice(-SECRET.length);
+      if (buffer.current === SECRET) {
+        buffer.current = "";
+        trigger();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function fireConfetti() {
+    const shots = [
+      { spread: 26, startVelocity: 55 },
+      { spread: 60 },
+      { spread: 100, decay: 0.91, scalar: 0.9 },
+      { spread: 120, startVelocity: 40 },
+    ];
+    shots.forEach((o, i) =>
+      confetti({
+        particleCount: 60,
+        origin: { y: 0.6 },
+        colors: SN_COLORS,
+        ...o,
+        ...(i % 2 ? { angle: 60 } : { angle: 120 }),
+      }),
+    );
+  }
+
+  function trigger() {
+    setOpen(true);
+    fireConfetti();
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => setOpen(false), 7000);
+  }
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+        >
+          <motion.div
+            initial={{ scale: 0.7, y: 30, rotate: -3 }}
+            animate={{ scale: 1, y: 0, rotate: 0 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 18 }}
+            className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/15 bg-slate-900 p-7 text-center shadow-2xl"
+          >
+            {/* bandeau aux couleurs du Sénégal */}
+            <div className="absolute inset-x-0 top-0 flex h-1.5">
+              <div className="flex-1" style={{ background: SN_COLORS[0] }} />
+              <div className="flex-1" style={{ background: SN_COLORS[1] }} />
+              <div className="flex-1" style={{ background: SN_COLORS[2] }} />
+            </div>
+
+            <motion.div
+              animate={{ rotate: [0, -12, 12, -8, 8, 0], y: [0, -8, 0] }}
+              transition={{ duration: 1.1, repeat: Infinity, repeatDelay: 0.4 }}
+              className="text-7xl"
+            >
+              🦁
+            </motion.div>
+
+            <div className="mt-2 flex items-center justify-center gap-2">
+              <Flag code="SEN" size={30} />
+              <h2 className="font-display text-2xl font-extrabold text-white">
+                Eh Moussa ! 🦁
+              </h2>
+            </div>
+
+            <p className="mt-3 text-base font-semibold leading-relaxed text-slate-200">
+              Rends-nous la coupe et arrête de faire le rageux 😤
+            </p>
+
+            <p className="mt-3 font-display text-3xl font-extrabold text-red-400">
+              VA CHIER !!
+            </p>
+
+            <p className="mt-4 text-[11px] text-slate-500">(clique pour fermer)</p>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
