@@ -51,7 +51,7 @@ export default function PredictionForm({
       <div className="flex items-center gap-1.5 sm:gap-3">
         <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 text-right sm:gap-2">
           <span className="truncate text-sm font-semibold">{home.name}</span>
-          <Flag code={home.code} size={30} className="shrink-0" />
+          <Flag code={home.code} size={34} className="shrink-0" />
         </div>
 
         <ScoreInput
@@ -67,7 +67,7 @@ export default function PredictionForm({
         />
 
         <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
-          <Flag code={away.code} size={30} className="shrink-0" />
+          <Flag code={away.code} size={34} className="shrink-0" />
           <span className="truncate text-sm font-semibold">{away.name}</span>
         </div>
       </div>

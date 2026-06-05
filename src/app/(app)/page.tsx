@@ -40,6 +40,8 @@ export default async function HomePage() {
     ]);
 
   const rank = leaderboard.findIndex((r) => r.userId === user.id) + 1;
+  // Le classement n'a de sens que quand au moins un joueur a marqué des points.
+  const ranked = (leaderboard[0]?.points ?? 0) > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -77,7 +79,7 @@ export default async function HomePage() {
                       <span className="truncate font-semibold">
                         {m.homeTeam?.name ?? "?"}
                       </span>
-                      <Flag code={m.homeTeam?.code} size={24} className="shrink-0" />
+                      <Flag code={m.homeTeam?.code} size={28} className="shrink-0" />
                     </span>
                     <span className="flex shrink-0 items-center gap-2">
                       <LiveScore
@@ -92,7 +94,7 @@ export default async function HomePage() {
                       )}
                     </span>
                     <span className="flex min-w-0 flex-1 items-center gap-2">
-                      <Flag code={m.awayTeam?.code} size={24} className="shrink-0" />
+                      <Flag code={m.awayTeam?.code} size={28} className="shrink-0" />
                       <span className="truncate font-semibold">
                         {m.awayTeam?.name ?? "?"}
                       </span>
@@ -116,7 +118,7 @@ export default async function HomePage() {
           <Stat label="Mes points" value={<AnimatedNumber value={points} />} />
           <Stat
             label="Classement"
-            value={rank > 0 ? `${rank}${rank === 1 ? "er" : "e"}` : "—"}
+            value={ranked && rank > 0 ? `${rank}${rank === 1 ? "er" : "e"}` : "—"}
           />
           <Stat
             label="Pronos faits"
@@ -143,11 +145,11 @@ export default async function HomePage() {
                   className="flex items-center justify-between gap-3 py-2.5 text-sm"
                 >
                   <span className="flex items-center gap-2 font-medium">
-                    <Flag code={m.homeTeam?.code} size={24} />
+                    <Flag code={m.homeTeam?.code} size={28} />
                     <span className="hidden sm:inline">{m.homeTeam?.name ?? "?"}</span>
                     <span className="text-slate-500">vs</span>
                     <span className="hidden sm:inline">{m.awayTeam?.name ?? "?"}</span>
-                    <Flag code={m.awayTeam?.code} size={24} />
+                    <Flag code={m.awayTeam?.code} size={28} />
                   </span>
                   <span className="text-xs text-slate-400">
                     {formatKickoff(m.kickoff)}

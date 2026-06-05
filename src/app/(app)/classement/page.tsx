@@ -9,6 +9,7 @@ import Reveal from "@/components/Reveal";
 import Avatar from "@/components/Avatar";
 import LiveLeaderboard from "@/components/LiveLeaderboard";
 import LiveRefresher from "@/components/LiveRefresher";
+import RankCelebration from "@/components/RankCelebration";
 
 export const dynamic = "force-dynamic";
 
@@ -89,9 +90,15 @@ export default async function ClassementPage({
     subtitle = "Qui sera le meilleur pronostiqueur ? 🏆";
   }
 
+  const isLeader =
+    !activeDay &&
+    rows[0]?.userId === user.id &&
+    (rows[0]?.points ?? 0) > 0;
+
   return (
     <div className="flex flex-col gap-6">
       {hasLive && <LiveRefresher />}
+      {isLeader && <RankCelebration />}
       <Reveal>
         <h1 className="font-display text-3xl font-extrabold">Classement</h1>
         <p className="text-slate-400">{subtitle}</p>

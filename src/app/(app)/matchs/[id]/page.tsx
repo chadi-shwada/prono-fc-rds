@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatKickoff } from "@/lib/format";
+import { teamColor } from "@/lib/teamColor";
 import { STAGE_LABELS, MATCH_STATUS, STAGES, type Stage } from "@/lib/constants";
 import Reveal from "@/components/Reveal";
 import Flag from "@/components/Flag";
@@ -49,6 +50,13 @@ export default async function MatchDetailPage({
       (b.points ?? -1) - (a.points ?? -1) || a.user.name.localeCompare(b.user.name),
   );
 
+  // Tendance des pronos : victoire domicile / nul / victoire extérieur
+  const total = preds.length;
+  const homeWin = preds.filter((p) => p.homeScore > p.awayScore).length;
+  const drawCount = preds.filter((p) => p.homeScore === p.awayScore).length;
+  const awayWin = total - homeWin - drawCount;
+  const pct = (n: number) => (total ? Math.round((n / total) * 100) : 0);
+
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
       {live && <LiveRefresher />}
@@ -63,7 +71,17 @@ export default async function MatchDetailPage({
 
       {/* En-tête du match */}
       <Reveal delay={0.05}>
-        <div className="glass rounded-2xl p-6">
+        <div className="glass relative overflow-hidden rounded-2xl p-6">
+          {match.homeTeam && match.awayTeam && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 opacity-[0.14]"
+              style={{
+                background: `linear-gradient(105deg, ${teamColor(match.homeTeam.code)}, transparent 42%, transparent 58%, ${teamColor(match.awayTeam.code)})`,
+              }}
+            />
+          )}
+          <div className="relative">
           <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs text-slate-400">
             <span className="justify-self-start truncate rounded-full bg-white/10 px-2.5 py-0.5 font-medium">
               {STAGE_LABELS[match.stage as Stage] ?? match.stage}
@@ -101,8 +119,65 @@ export default async function MatchDetailPage({
               </span>
             </span>
           </div>
+          </div>
         </div>
       </Reveal>
+
+      {/* Tendance des pronos */}
+      {locked && total > 0 && match.homeTeam && match.awayTeam && (
+        <Reveal delay={0.08}>
+          <div className="glass rounded-2xl p-4">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Tendance des pronos
+            </div>
+            <div className="flex h-3 overflow-hidden rounded-full bg-white/10">
+              {homeWin > 0 && (
+                <div
+                  style={{
+                    width: `${(homeWin / total) * 100}%`,
+                    background: teamColor(match.homeTeam.code),
+                  }}
+                />
+              )}
+              {drawCount > 0 && (
+                <div
+                  className="bg-slate-500"
+                  style={{ width: `${(drawCount / total) * 100}%` }}
+                />
+              )}
+              {awayWin > 0 && (
+                <div
+                  style={{
+                    width: `${(awayWin / total) * 100}%`,
+                    background: teamColor(match.awayTeam.code),
+                  }}
+                />
+              )}
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-2 text-xs">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ background: teamColor(match.homeTeam.code) }}
+                />
+                <span className="truncate font-medium">{match.homeTeam.name}</span>
+                <span className="font-bold text-white">{pct(homeWin)}%</span>
+              </span>
+              {drawCount > 0 && (
+                <span className="shrink-0 text-slate-400">Nul {pct(drawCount)}%</span>
+              )}
+              <span className="flex min-w-0 items-center justify-end gap-1.5">
+                <span className="font-bold text-white">{pct(awayWin)}%</span>
+                <span className="truncate font-medium">{match.awayTeam.name}</span>
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ background: teamColor(match.awayTeam.code) }}
+                />
+              </span>
+            </div>
+          </div>
+        </Reveal>
+      )}
 
       {/* Pronos des participants */}
       <Reveal delay={0.1}>

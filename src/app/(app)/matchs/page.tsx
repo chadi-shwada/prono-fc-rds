@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatKickoff } from "@/lib/format";
+import { teamColor } from "@/lib/teamColor";
 import { STAGE_LABELS, MATCH_STATUS, type Stage } from "@/lib/constants";
 import PredictionForm from "@/components/PredictionForm";
 import ChampionForm from "@/components/ChampionForm";
@@ -167,7 +168,17 @@ export default async function MatchsPage({
             return (
               <li key={m.id} className="min-w-0">
                 <Reveal delay={Math.min(i * 0.03, 0.3)}>
-                  <div className="card-hover glass rounded-2xl p-4">
+                  <div className="card-hover glass relative overflow-hidden rounded-2xl p-4">
+                    {bothTeams && (
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 opacity-[0.12]"
+                        style={{
+                          background: `linear-gradient(105deg, ${teamColor(home.code)}, transparent 42%, transparent 58%, ${teamColor(away.code)})`,
+                        }}
+                      />
+                    )}
+                    <div className="relative">
                     <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs text-slate-400">
                       <span className="justify-self-start truncate rounded-full bg-white/10 px-2.5 py-0.5 font-medium">
                         {STAGE_LABELS[m.stage as Stage] ?? m.stage}
@@ -213,6 +224,7 @@ export default async function MatchsPage({
                         👀 Pronos des autres →
                       </Link>
                     </div>
+                    </div>
                   </div>
                 </Reveal>
               </li>
@@ -257,7 +269,7 @@ function LockedMatch({
       <div className="flex items-center justify-center gap-2 text-sm font-semibold sm:gap-3">
         <span className="flex min-w-0 flex-1 items-center justify-end gap-2 text-right">
           <span className="truncate">{home.name}</span>
-          <Flag code={home.code} size={30} className="shrink-0" />
+          <Flag code={home.code} size={34} className="shrink-0" />
         </span>
         {live ? (
           <LiveScore
@@ -275,7 +287,7 @@ function LockedMatch({
           </span>
         )}
         <span className="flex min-w-0 flex-1 items-center gap-2">
-          <Flag code={away.code} size={30} className="shrink-0" />
+          <Flag code={away.code} size={34} className="shrink-0" />
           <span className="truncate">{away.name}</span>
         </span>
       </div>
