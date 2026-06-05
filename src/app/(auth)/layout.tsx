@@ -3,6 +3,7 @@ import Reveal from "@/components/Reveal";
 import Countdown from "@/components/Countdown";
 import FlagsMarquee from "@/components/FlagsMarquee";
 import Logo from "@/components/Logo";
+import GoalNet from "@/components/GoalNet";
 
 export default async function AuthLayout({
   children,
@@ -17,6 +18,10 @@ export default async function AuthLayout({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 py-10">
+      {/* Cages de but décoratives (masquées sur mobile) */}
+      <GoalNet className="pointer-events-none fixed left-0 top-1/2 hidden h-[58vh] max-h-[440px] -translate-y-1/2 text-white/[0.13] lg:block" />
+      <GoalNet className="pointer-events-none fixed right-0 top-1/2 hidden h-[58vh] max-h-[440px] -translate-y-1/2 -scale-x-100 text-white/[0.13] lg:block" />
+
       <div className="w-full max-w-sm">
         <Reveal>
           <div className="mb-7 text-center">
