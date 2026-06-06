@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getLeaderboard } from "@/lib/leaderboard";
+import { getEngagement } from "@/lib/engagement";
 import { formatKickoff } from "@/lib/format";
 import Reveal from "@/components/Reveal";
 import AnimatedNumber from "@/components/AnimatedNumber";
@@ -19,7 +20,7 @@ export default async function HomePage() {
   const user = await getCurrentUser();
   if (!user) return null; // le layout (app)/layout.tsx redirige déjà vers /login
 
-  const [leaderboard, predictionCount, upcoming, firstMatch, liveMatches] =
+  const [leaderboard, predictionCount, upcoming, firstMatch, liveMatches, engagement] =
     await Promise.all([
       getLeaderboard(),
       prisma.prediction.count({ where: { userId: user.id } }),
@@ -35,13 +36,20 @@ export default async function HomePage() {
         orderBy: { kickoff: "asc" },
         include: { homeTeam: true, awayTeam: true },
       }),
+      getEngagement(user.id),
     ]);
 
-  const rank = leaderboard.findIndex((r) => r.userId === user.id) + 1;
+  const meIndex = leaderboard.findIndex((r) => r.userId === user.id);
+  const rank = meIndex + 1;
   // Points du joueur dérivés du classement (déjà calculé) — évite une requête.
   const points = leaderboard.find((r) => r.userId === user.id)?.points ?? 0;
   // Le classement n'a de sens que quand au moins un joueur a marqué des points.
   const ranked = (leaderboard[0]?.points ?? 0) > 0;
+
+  // Duels : voisins directs au classement (à rattraper / à distancer).
+  const rival = meIndex > 0 ? leaderboard[meIndex - 1] : null;
+  const chaser = meIndex >= 0 ? leaderboard[meIndex + 1] ?? null : null;
+  const showDuels = ranked && (rival !== null || chaser !== null);
 
   return (
     <div className="flex flex-col gap-6">
@@ -71,6 +79,51 @@ export default async function HomePage() {
           </span>
         </div>
       </Reveal>
+
+      {(engagement.todayTotal > 0 || engagement.streak > 0) && (
+        <Reveal delay={0.03}>
+          <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-400/25 bg-gradient-to-br from-emerald-500/[0.12] to-transparent p-4">
+            <div className="flex items-center gap-3">
+              {engagement.streak > 0 && (
+                <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-400/15 px-3 py-1 text-sm font-bold text-amber-300">
+                  🔥 {engagement.streak} jour{engagement.streak > 1 ? "s" : ""}
+                </span>
+              )}
+              <div>
+                {engagement.todayTotal > 0 ? (
+                  engagement.todayToPredict > 0 ? (
+                    <p className="font-display text-lg font-bold">
+                      ⚽ {engagement.todayToPredict} prono
+                      {engagement.todayToPredict > 1 ? "s" : ""} à faire aujourd&apos;hui
+                    </p>
+                  ) : (
+                    <p className="font-display text-lg font-bold text-emerald-300">
+                      ✅ Tous tes pronos du jour sont faits !
+                    </p>
+                  )
+                ) : (
+                  <p className="font-display text-lg font-bold">
+                    🔥 Garde ta série en vie !
+                  </p>
+                )}
+                {engagement.nextKickoff && (
+                  <p className="text-xs text-slate-400">
+                    Prochain coup d&apos;envoi : {formatKickoff(engagement.nextKickoff)}
+                  </p>
+                )}
+              </div>
+            </div>
+            {engagement.todayToPredict > 0 && (
+              <Link
+                href="/matchs"
+                className="shrink-0 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-400"
+              >
+                Pronostiquer →
+              </Link>
+            )}
+          </section>
+        </Reveal>
+      )}
 
       {liveMatches.length > 0 && (
         <Reveal delay={0.04}>
@@ -137,6 +190,51 @@ export default async function HomePage() {
           />
         </section>
       </Reveal>
+
+      {showDuels && (
+        <Reveal delay={0.12}>
+          <section className="glass rounded-2xl p-5">
+            <h2 className="mb-3 font-display text-lg font-bold">Tes duels 🥊</h2>
+            <div className="flex flex-col gap-2.5">
+              {rival ? (
+                <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5">
+                  <span className="text-lg">🔼</span>
+                  <Avatar name={rival.name} size={32} />
+                  <span className="min-w-0 flex-1 truncate font-semibold capitalize">
+                    {rival.name}
+                  </span>
+                  <span className="shrink-0 text-sm text-slate-400">
+                    <span className="font-display font-bold text-amber-300">
+                      {rival.points - points}
+                    </span>{" "}
+                    pts devant
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 rounded-xl border border-amber-300/30 bg-amber-300/[0.07] px-3 py-2.5">
+                  <span className="text-lg">👑</span>
+                  <span className="font-semibold">Tu es en tête du classement !</span>
+                </div>
+              )}
+              {chaser && (
+                <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5">
+                  <span className="text-lg">🔽</span>
+                  <Avatar name={chaser.name} size={32} />
+                  <span className="min-w-0 flex-1 truncate font-semibold capitalize">
+                    {chaser.name}
+                  </span>
+                  <span className="shrink-0 text-sm text-slate-400">
+                    <span className="font-display font-bold text-emerald-400">
+                      {points - chaser.points}
+                    </span>{" "}
+                    pts derrière
+                  </span>
+                </div>
+              )}
+            </div>
+          </section>
+        </Reveal>
+      )}
 
       <Reveal delay={0.16}>
         <section className="glass rounded-2xl p-5">
