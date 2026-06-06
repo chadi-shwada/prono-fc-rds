@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "motion/react";
+import {
+  motion,
+  useMotionTemplate,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "motion/react";
+import type { PointerEvent } from "react";
 import Logo from "@/components/Logo";
 import AnimatedNumber from "@/components/AnimatedNumber";
 
@@ -17,8 +24,31 @@ function rise(delay: number) {
 }
 
 export default function LandingHero() {
+  // Lueur emerald qui suit le curseur (parallax léger), lissée par un ressort.
+  const mx = useMotionValue(0.5);
+  const my = useMotionValue(0.35);
+  const sx = useSpring(mx, { stiffness: 60, damping: 20 });
+  const sy = useSpring(my, { stiffness: 60, damping: 20 });
+  const px = useTransform(sx, (v) => `${v * 100}%`);
+  const py = useTransform(sy, (v) => `${v * 100}%`);
+  const glow = useMotionTemplate`radial-gradient(480px circle at ${px} ${py}, rgba(16,185,129,0.16), transparent 60%)`;
+
+  const onMove = (e: PointerEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    mx.set((e.clientX - r.left) / r.width);
+    my.set((e.clientY - r.top) / r.height);
+  };
+
   return (
-    <section className="relative flex flex-col items-center gap-5 pt-12 text-center sm:pt-16">
+    <section
+      onPointerMove={onMove}
+      className="relative isolate flex flex-col items-center gap-5 pt-12 text-center sm:pt-16"
+    >
+      <motion.div
+        aria-hidden
+        style={{ background: glow }}
+        className="pointer-events-none absolute inset-0 -z-10"
+      />
       <motion.span
         {...rise(0.05)}
         className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-slate-300"

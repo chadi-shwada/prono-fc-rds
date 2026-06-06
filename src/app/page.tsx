@@ -10,6 +10,8 @@ import Reveal from "@/components/Reveal";
 import Logo from "@/components/Logo";
 import LandingHero from "@/components/landing/LandingHero";
 import FeatureCard from "@/components/landing/FeatureCard";
+import LandingPreview from "@/components/landing/LandingPreview";
+import LandingConfetti from "@/components/landing/LandingConfetti";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +29,8 @@ export default async function Landing() {
     <div className="relative flex min-h-screen flex-col">
       {/* Ambiance : ballons/coupes qui flottent (l'aurore est dans le layout racine) */}
       <Particles />
+      {/* Petit clin d'œil festif à l'arrivée */}
+      <LandingConfetti />
 
       {/* Barre publique */}
       <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/70 backdrop-blur">
@@ -83,6 +87,21 @@ export default async function Landing() {
               title="Le bonus champion"
               text="Désigne le vainqueur de la Coupe avant le 1er match : +10 pts si tu vises juste."
             />
+          </div>
+        </section>
+
+        {/* Aperçu de l'app */}
+        <section className="mt-16">
+          <Reveal>
+            <h2 className="text-center font-display text-3xl font-extrabold">
+              Un avant-goût
+            </h2>
+            <p className="mt-1 text-center text-slate-400">
+              Pronos, scores en direct et classement qui bouge.
+            </p>
+          </Reveal>
+          <div className="mt-7">
+            <LandingPreview />
           </div>
         </section>
 
