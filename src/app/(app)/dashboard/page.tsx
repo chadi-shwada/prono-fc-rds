@@ -3,7 +3,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { getEngagement } from "@/lib/engagement";
+import { getVapidPublicKey } from "@/lib/push";
 import { formatKickoff } from "@/lib/format";
+import NotifNudge from "@/components/NotifNudge";
 import Reveal from "@/components/Reveal";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import Countdown from "@/components/Countdown";
@@ -51,6 +53,8 @@ export default async function HomePage() {
   const chaser = meIndex >= 0 ? leaderboard[meIndex + 1] ?? null : null;
   const showDuels = ranked && (rival !== null || chaser !== null);
 
+  const vapidKey = getVapidPublicKey();
+
   return (
     <div className="flex flex-col gap-6">
       {liveMatches.length > 0 && <LiveRefresher />}
@@ -79,6 +83,8 @@ export default async function HomePage() {
           </span>
         </div>
       </Reveal>
+
+      {vapidKey && <NotifNudge publicKey={vapidKey} />}
 
       {(engagement.todayTotal > 0 || engagement.streak > 0) && (
         <Reveal delay={0.03}>

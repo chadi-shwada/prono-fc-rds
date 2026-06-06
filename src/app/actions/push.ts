@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { isPushConfigured, sendTestNotification } from "@/lib/push";
 
 type SubInput = {
   endpoint: string;
@@ -33,4 +34,20 @@ export async function deletePushSubscriptionAction(endpoint: string): Promise<vo
   await prisma.pushSubscription
     .deleteMany({ where: { endpoint, userId: user.id } })
     .catch(() => {});
+}
+
+export type TestResult = { ok: boolean; sent: number; error?: string };
+
+/** Envoie une notification de test à l'utilisateur courant (vérification). */
+export async function sendTestNotificationAction(): Promise<TestResult> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, sent: 0, error: "Non connecté." };
+  if (!isPushConfigured()) {
+    return { ok: false, sent: 0, error: "Notifications non configurées (clés VAPID manquantes)." };
+  }
+  const sent = await sendTestNotification(user.id);
+  if (sent === 0) {
+    return { ok: false, sent: 0, error: "Aucun abonnement : active d'abord les notifications sur ton Profil." };
+  }
+  return { ok: true, sent };
 }

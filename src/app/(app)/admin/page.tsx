@@ -8,6 +8,8 @@ import AdminResultForm from "@/components/AdminResultForm";
 import SyncButton from "@/components/SyncButton";
 import CreateCodeForm from "@/components/CreateCodeForm";
 import ResetPronosButton from "@/components/ResetPronosButton";
+import TestNotificationButton from "@/components/TestNotificationButton";
+import { isPushConfigured } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +57,17 @@ export default async function AdminPage() {
         </p>
         <SyncButton />
       </section>
+
+      {isPushConfigured() && (
+        <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <h2 className="mb-1 font-semibold">Notifications push</h2>
+          <p className="mb-3 text-sm text-slate-400">
+            Vérifie que les notifications fonctionnent (envoi immédiat sur tes
+            appareils où tu les as activées).
+          </p>
+          <TestNotificationButton />
+        </section>
+      )}
 
       <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
         <h2 className="mb-1 font-semibold">Codes d&apos;invitation</h2>

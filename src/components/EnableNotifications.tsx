@@ -2,20 +2,13 @@
 
 import { useEffect, useState } from "react";
 import {
-  savePushSubscriptionAction,
-  deletePushSubscriptionAction,
-} from "@/app/actions/push";
+  getPushState,
+  subscribeToPush,
+  unsubscribeFromPush,
+  type PushState,
+} from "@/lib/pushClient";
 
-type State = "loading" | "unsupported" | "blocked" | "off" | "on" | "busy";
-
-function urlB64ToUint8Array(base64: string): Uint8Array {
-  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
-  const b64 = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(b64);
-  const arr = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
-  return arr;
-}
+type State = PushState | "loading" | "busy";
 
 // Bouton d'activation des notifications push. La clé publique VAPID est passée
 // par le serveur (pas de NEXT_PUBLIC_* → pas de dépendance au build).
@@ -24,25 +17,7 @@ export default function EnableNotifications({ publicKey }: { publicKey: string }
 
   useEffect(() => {
     let alive = true;
-    const resolve = async (): Promise<State> => {
-      if (
-        typeof window === "undefined" ||
-        !("serviceWorker" in navigator) ||
-        !("PushManager" in window) ||
-        !("Notification" in window)
-      ) {
-        return "unsupported";
-      }
-      if (Notification.permission === "denied") return "blocked";
-      try {
-        const reg = await navigator.serviceWorker.getRegistration();
-        const sub = await reg?.pushManager.getSubscription();
-        return sub ? "on" : "off";
-      } catch {
-        return "off";
-      }
-    };
-    resolve().then((s) => {
+    getPushState().then((s) => {
       if (alive) setState(s);
     });
     return () => {
@@ -52,45 +27,13 @@ export default function EnableNotifications({ publicKey }: { publicKey: string }
 
   const enable = async () => {
     setState("busy");
-    try {
-      const reg = await navigator.serviceWorker.register("/sw.js");
-      await navigator.serviceWorker.ready;
-      const perm = await Notification.requestPermission();
-      if (perm !== "granted") {
-        setState(perm === "denied" ? "blocked" : "off");
-        return;
-      }
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlB64ToUint8Array(publicKey) as BufferSource,
-      });
-      const json = sub.toJSON() as {
-        endpoint?: string;
-        keys?: { p256dh?: string; auth?: string };
-      };
-      await savePushSubscriptionAction({
-        endpoint: json.endpoint!,
-        keys: { p256dh: json.keys!.p256dh!, auth: json.keys!.auth! },
-      });
-      setState("on");
-    } catch {
-      setState("off");
-    }
+    setState(await subscribeToPush(publicKey));
   };
 
   const disable = async () => {
     setState("busy");
-    try {
-      const reg = await navigator.serviceWorker.getRegistration();
-      const sub = await reg?.pushManager.getSubscription();
-      if (sub) {
-        await deletePushSubscriptionAction(sub.endpoint);
-        await sub.unsubscribe();
-      }
-      setState("off");
-    } catch {
-      setState("on");
-    }
+    await unsubscribeFromPush();
+    setState("off");
   };
 
   if (state === "unsupported") {
@@ -121,7 +64,6 @@ export default function EnableNotifications({ publicKey }: { publicKey: string }
       {state === "on" ? (
         <button
           onClick={disable}
-          disabled={state !== "on"}
           className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/10"
         >
           Désactiver

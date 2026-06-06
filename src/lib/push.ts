@@ -27,6 +27,18 @@ export function getVapidPublicKey(): string | null {
 
 type Payload = { title: string; body: string; url?: string };
 
+/** Notification de test immédiate (vérifier que le tuyau fonctionne). */
+export async function sendTestNotification(userId: string): Promise<number> {
+  if (!ensureConfigured()) return 0;
+  const subs = await prisma.pushSubscription.findMany({ where: { userId } });
+  await sendToUser(userId, {
+    title: "Test ✅",
+    body: "Les notifications fonctionnent ! Tu es prêt pour le tournoi ⚽",
+    url: "/dashboard",
+  });
+  return subs.length;
+}
+
 /** Envoie une notif à tous les navigateurs d'un utilisateur (nettoie les morts). */
 async function sendToUser(userId: string, payload: Payload): Promise<void> {
   if (!ensureConfigured()) return;
