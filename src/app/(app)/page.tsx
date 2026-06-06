@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { userTotalPoints } from "@/lib/scoring";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { formatKickoff } from "@/lib/format";
 import Reveal from "@/components/Reveal";
@@ -20,9 +19,8 @@ export default async function HomePage() {
   const user = await getCurrentUser();
   if (!user) return null; // le layout (app)/layout.tsx redirige déjà vers /login
 
-  const [points, leaderboard, predictionCount, upcoming, firstMatch, liveMatches] =
+  const [leaderboard, predictionCount, upcoming, firstMatch, liveMatches] =
     await Promise.all([
-      userTotalPoints(user.id),
       getLeaderboard(),
       prisma.prediction.count({ where: { userId: user.id } }),
       prisma.match.findMany({
@@ -40,6 +38,8 @@ export default async function HomePage() {
     ]);
 
   const rank = leaderboard.findIndex((r) => r.userId === user.id) + 1;
+  // Points du joueur dérivés du classement (déjà calculé) — évite une requête.
+  const points = leaderboard.find((r) => r.userId === user.id)?.points ?? 0;
   // Le classement n'a de sens que quand au moins un joueur a marqué des points.
   const ranked = (leaderboard[0]?.points ?? 0) > 0;
 
@@ -157,9 +157,11 @@ export default async function HomePage() {
                 >
                   <span className="flex items-center gap-2 font-medium">
                     <Flag code={m.homeTeam?.code} size={28} />
+                    <span className="sm:hidden">{m.homeTeam?.code ?? "?"}</span>
                     <span className="hidden sm:inline">{m.homeTeam?.name ?? "?"}</span>
-                    <span className="text-slate-500">vs</span>
+                    <span className="text-slate-400">vs</span>
                     <span className="hidden sm:inline">{m.awayTeam?.name ?? "?"}</span>
+                    <span className="sm:hidden">{m.awayTeam?.code ?? "?"}</span>
                     <Flag code={m.awayTeam?.code} size={28} />
                   </span>
                   <span className="text-xs text-slate-400">

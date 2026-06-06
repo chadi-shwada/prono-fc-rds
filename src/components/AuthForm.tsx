@@ -48,7 +48,7 @@ export default function AuthForm() {
         {pending ? "..." : "Entrer dans le jeu ⚽"}
       </motion.button>
 
-      <p className="text-center text-xs text-slate-500">
+      <p className="text-center text-xs text-slate-400">
         Nouveau ? Ton compte est créé automatiquement avec ton pseudo.
       </p>
     </form>

@@ -9,6 +9,15 @@ export type DailyAward = {
   dayLabel: string;
 };
 
+type MatchForAward = {
+  kickoff: Date;
+  predictions: {
+    userId: string;
+    points: number | null;
+    user: { name: string };
+  }[];
+};
+
 /**
  * « Joueur du jour » : le meilleur scoreur de la dernière journée terminée
  * (somme des points des pronos sur les matchs finis de ce jour). null s'il
@@ -28,6 +37,14 @@ export async function getPlayerOfTheDay(): Promise<DailyAward | null> {
       },
     },
   });
+  return playerOfTheDayFrom(matches);
+}
+
+/**
+ * Version pure : calcule le joueur du jour à partir de matchs terminés déjà
+ * chargés (évite une 2e requête identique quand l'appelant a déjà les données).
+ */
+export function playerOfTheDayFrom(matches: MatchForAward[]): DailyAward | null {
   if (matches.length === 0) return null;
 
   // Dernière journée terminée (clé jour la plus récente).

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getLeaderboard, type LeaderboardRow } from "@/lib/leaderboard";
-import { getPlayerOfTheDay } from "@/lib/dailyAward";
+import { playerOfTheDayFrom } from "@/lib/dailyAward";
 import { dayKey, formatDayLabel } from "@/lib/format";
 import { MATCH_STATUS } from "@/lib/constants";
 import Reveal from "@/components/Reveal";
@@ -49,7 +49,8 @@ export default async function ClassementPage({
 
   const days = [...new Set(finished.map((m) => dayKey(m.kickoff)))];
   const activeDay = jour && days.includes(jour) ? jour : null;
-  const playerOfDay = await getPlayerOfTheDay();
+  // Réutilise les matchs déjà chargés (au lieu d'une 2e requête identique).
+  const playerOfDay = playerOfTheDayFrom(finished);
   const hasLive =
     (await prisma.match.count({ where: { status: MATCH_STATUS.LIVE } })) > 0;
 

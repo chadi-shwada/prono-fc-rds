@@ -106,11 +106,24 @@ async function upsertTeam(t: ValidApiTeam): Promise<string> {
   return created.id;
 }
 
+// Garde-fou anti-concurrence : si une synchro est déjà en cours dans ce process
+// (ex. clic admin pendant que le cron tourne), on réutilise la même promesse au
+// lieu de lancer des écritures SQLite concurrentes.
+let syncInFlight: Promise<SyncResult> | null = null;
+
 /**
  * Synchronise équipes + calendrier + résultats depuis football-data.org.
  * Recalcule les points des matchs passés à "terminé".
  */
-export async function syncFromFootballData(): Promise<SyncResult> {
+export function syncFromFootballData(): Promise<SyncResult> {
+  if (syncInFlight) return syncInFlight;
+  syncInFlight = runSync().finally(() => {
+    syncInFlight = null;
+  });
+  return syncInFlight;
+}
+
+async function runSync(): Promise<SyncResult> {
   const key = process.env.FOOTBALL_API_KEY;
   if (!key) {
     throw new Error(

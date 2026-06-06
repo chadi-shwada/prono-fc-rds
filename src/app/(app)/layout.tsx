@@ -22,7 +22,7 @@ export default async function AppLayout({
       <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 pt-6 pb-8 sm:px-6 lg:px-10">
         {children}
       </main>
-      <footer className="border-t border-white/10 pt-4 pb-24 text-center text-xs text-slate-500 md:pb-4">
+      <footer className="border-t border-white/10 pt-4 pb-24 text-center text-xs text-slate-400 md:pb-4">
         <Link href="/regles" className="text-slate-400 hover:text-emerald-400">
           Règles du jeu
         </Link>

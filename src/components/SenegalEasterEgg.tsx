@@ -101,7 +101,7 @@ export default function SenegalEasterEgg() {
               VA CHIER !!
             </p>
 
-            <p className="mt-4 text-[11px] text-slate-500">(clique pour fermer)</p>
+            <p className="mt-4 text-[11px] text-slate-400">(clique pour fermer)</p>
           </motion.div>
         </motion.div>
       )}
