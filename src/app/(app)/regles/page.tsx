@@ -94,7 +94,8 @@ export default function ReglesPage() {
         <Section title="🔑 La connexion">
           <p>
             Pas de mot de passe : tu te connectes avec ton <strong>pseudo</strong> et
-            le <strong>code d&apos;invitation</strong> partagé par l&apos;organisateur.
+            le <strong>code d&apos;invitation</strong>{" "}
+            partagé par l&apos;organisateur.
             Ton compte se crée tout seul la première fois.
           </p>
         </Section>
