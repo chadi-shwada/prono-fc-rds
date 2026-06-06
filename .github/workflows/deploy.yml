@@ -33,16 +33,20 @@ jobs:
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
+      # ssh -4 : les runners GitHub sont IPv4-only → on évite tout essai IPv6.
+      # ConnectTimeout : échec rapide (20 s) au lieu d'attendre ~2 min si le VPS
+      # est injoignable. ServerAliveInterval : coupe une connexion morte.
       - name: Envoyer le code (rsync)
         run: |
           rsync -az --delete \
             --exclude='.git' --exclude='node_modules' --exclude='.next' --exclude='.env' \
-            -e "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+            -e "ssh -4 -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=20 -o ServerAliveInterval=15" \
             ./ "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/prono/"
 
       - name: Reconstruire et redémarrer
         run: |
-          ssh -i ~/.ssh/id_ed25519 \
+          ssh -4 -i ~/.ssh/id_ed25519 \
             -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            -o ConnectTimeout=20 -o ServerAliveInterval=15 \
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
-            "cd ~/prono && docker compose up -d --build && docker image prune -f"
+            "cd ~/prono && docker compose up -d --build && docker image prune -f && docker builder prune -f"
