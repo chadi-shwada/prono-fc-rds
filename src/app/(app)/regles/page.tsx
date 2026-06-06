@@ -51,8 +51,8 @@ export default function ReglesPage() {
             </tbody>
           </table>
           <p className="mt-3 text-xs text-slate-400">
-            Les matchs à élimination directe comptent <strong>double</strong> (×
-            {SCORING.KNOCKOUT_MULTIPLIER}) — ils sont plus décisifs !
+            Les matchs à élimination directe comptent <strong>double</strong>{" "}
+            (×{SCORING.KNOCKOUT_MULTIPLIER}) — ils sont plus décisifs !
           </p>
         </Section>
       </Reveal>
@@ -61,10 +61,12 @@ export default function ReglesPage() {
         <Section title="⏱️ Prolongations & tirs au but">
           <p>
             Pour les matchs à élimination directe, on retient le{" "}
-            <strong>score final publié</strong> (prolongation comprise). En cas
-            de match nul réglé aux <strong>tirs au but</strong>, c&apos;est le{" "}
-            <strong>vainqueur qualifié</strong> qui compte pour le bonus —
-            même si l&apos;affiche reste à égalité au tableau.
+            <strong>score final publié</strong>{" "}
+            (prolongation comprise). En cas de match nul réglé aux{" "}
+            <strong>tirs au but</strong>, c&apos;est le{" "}
+            <strong>vainqueur qualifié</strong>{" "}
+            qui compte pour le bonus — même si l&apos;affiche reste à égalité
+            au tableau.
           </p>
         </Section>
       </Reveal>
@@ -93,8 +95,8 @@ export default function ReglesPage() {
       <Reveal delay={0.25}>
         <Section title="🔑 La connexion">
           <p>
-            Pas de mot de passe : tu te connectes avec ton <strong>pseudo</strong> et
-            le <strong>code d&apos;invitation</strong>{" "}
+            Pas de mot de passe : tu te connectes avec ton <strong>pseudo</strong>{" "}
+            et le <strong>code d&apos;invitation</strong>{" "}
             partagé par l&apos;organisateur.
             Ton compte se crée tout seul la première fois.
           </p>
