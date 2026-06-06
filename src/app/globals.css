@@ -191,6 +191,31 @@ body {
   background-position: center;
 }
 
+/* Squelettes de chargement : bloc gris avec reflet qui balaie */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  transform: translateX(-100%);
+  animation: skeletonSweep 1.4s ease-in-out infinite;
+}
+@keyframes skeletonSweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
 /* Chiffres « tableau d'affichage » : léger halo lumineux */
 .scoreboard {
   text-shadow: 0 0 14px rgba(52, 211, 153, 0.35);
@@ -217,7 +242,8 @@ body {
   .float,
   .glow-gold,
   .marquee-track,
-  .particle-float {
+  .particle-float,
+  .skeleton::after {
     animation: none;
   }
   .card-hover:hover {

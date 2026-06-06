@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import NavBar from "@/components/NavBar";
+import BottomNav from "@/components/BottomNav";
 import Particles from "@/components/Particles";
 import SenegalEasterEgg from "@/components/SenegalEasterEgg";
 
@@ -18,16 +19,17 @@ export default async function AppLayout({
       <Particles />
       <SenegalEasterEgg />
       <NavBar user={user} />
-      <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-6 sm:px-6 lg:px-10">
+      <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 pt-6 pb-8 sm:px-6 lg:px-10">
         {children}
       </main>
-      <footer className="border-t border-white/10 py-4 text-center text-xs text-slate-500">
+      <footer className="border-t border-white/10 pt-4 pb-24 text-center text-xs text-slate-500 md:pb-4">
         <Link href="/regles" className="text-slate-400 hover:text-emerald-400">
           Règles du jeu
         </Link>
         <span className="mx-2">·</span>
-Prono FC RDS · Coupe du Monde 2026 · entre collègues RATP
+        Prono FC RDS · Coupe du Monde 2026 · entre collègues RATP
       </footer>
+      <BottomNav />
     </div>
   );
 }
