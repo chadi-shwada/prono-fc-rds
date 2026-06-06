@@ -100,7 +100,7 @@ export default function MobileMenu({
               <form action={logoutAction} className="mt-2 border-t border-white/10 pt-2">
                 <button
                   type="submit"
-                  className="w-full rounded-lg px-3 py-2.5 text-left text-sm text-slate-400"
+                  className="w-full rounded-lg border border-red-400/30 bg-red-500/15 px-3 py-2.5 text-left text-sm font-medium text-red-200 transition hover:bg-red-500/30"
                 >
                   Déconnexion
                 </button>

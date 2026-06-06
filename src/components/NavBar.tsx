@@ -32,7 +32,7 @@ export default function NavBar({ user }: { user: SessionUser }) {
           <form action={logoutAction}>
             <button
               type="submit"
-              className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-slate-300 hover:bg-white/10"
+              className="rounded-lg border border-red-400/40 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-200 transition hover:bg-red-500/35"
             >
               Déconnexion
             </button>
