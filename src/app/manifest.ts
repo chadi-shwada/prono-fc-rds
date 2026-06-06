@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Prono FC RDS",
     description: "Pronostics de la Coupe du Monde 2026 entre collègues RATP",
     lang: "fr",
-    start_url: "/",
+    start_url: "/dashboard",
     display: "standalone",
     background_color: "#060a13",
     theme_color: "#10b981",

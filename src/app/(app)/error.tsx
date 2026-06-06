@@ -34,7 +34,7 @@ export default function AppError({
           Réessayer
         </button>
         <Link
-          href="/"
+          href="/dashboard"
           className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/10"
         >
           Retour à l&apos;accueil

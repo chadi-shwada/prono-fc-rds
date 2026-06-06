@@ -7,7 +7,7 @@ import { motion } from "motion/react";
 // Onglets principaux (mobile). Le reste (Calendrier, Carte, Tableau, Règles,
 // Admin, Déconnexion) reste accessible via le menu hamburger.
 const TABS = [
-  { href: "/", label: "Accueil", icon: "🏠" },
+  { href: "/dashboard", label: "Accueil", icon: "🏠" },
   { href: "/matchs", label: "Matchs", icon: "⚽" },
   { href: "/classement", label: "Classement", icon: "🏆" },
   { href: "/profil", label: "Profil", icon: "👤" },
@@ -25,7 +25,7 @@ export default function BottomNav() {
       <ul className="mx-auto flex max-w-md items-stretch">
         {TABS.map((t) => {
           const active =
-            t.href === "/" ? pathname === "/" : pathname.startsWith(t.href);
+            pathname === t.href || pathname.startsWith(`${t.href}/`);
           return (
             <li key={t.href} className="flex-1">
               <Link

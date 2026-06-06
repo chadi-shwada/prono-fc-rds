@@ -19,7 +19,7 @@ const memberDateFmt = new Intl.DateTimeFormat("fr-FR", {
 
 export default async function AdminPage() {
   const user = await getCurrentUser();
-  if (!user?.isAdmin) redirect("/");
+  if (!user?.isAdmin) redirect("/dashboard");
 
   const now = new Date();
   const [matches, invites, members] = await Promise.all([

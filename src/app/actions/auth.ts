@@ -50,7 +50,7 @@ export async function authAction(
   }
 
   await createSession(user.id);
-  redirect("/");
+  redirect("/dashboard");
 }
 
 export async function logoutAction(): Promise<void> {
