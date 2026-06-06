@@ -24,6 +24,20 @@ model User {
   predictions         Prediction[]
   championPrediction  ChampionPrediction?
   reactions           Reaction[]
+  pushSubscriptions   PushSubscription[]
+}
+
+/// Abonnement aux notifications push (Web Push) d'un navigateur de l'utilisateur.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 /// Session de connexion (cookie -> token).
@@ -92,6 +106,11 @@ model Match {
 
   // Ville hôte (id d'une HOST_CITIES) — importé du calendrier officiel
   venueCity String?
+
+  // Notifications push : horodatage d'envoi (null = pas encore envoyé), pour
+  // éviter de renvoyer à chaque passage du cron.
+  reminderSentAt   DateTime? // rappel avant le coup d'envoi
+  resultNotifiedAt DateTime? // résultat final notifié
 
   predictions Prediction[]
   reactions   Reaction[]

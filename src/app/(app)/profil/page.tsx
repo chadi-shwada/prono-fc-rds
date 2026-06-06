@@ -4,7 +4,9 @@ import { userTotalPoints } from "@/lib/scoring";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { getPlayerOfTheDay } from "@/lib/dailyAward";
 import { computeBadges, bestStreak } from "@/lib/badges";
+import { getVapidPublicKey } from "@/lib/push";
 import { MATCH_STATUS } from "@/lib/constants";
+import EnableNotifications from "@/components/EnableNotifications";
 import Reveal from "@/components/Reveal";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import Flag from "@/components/Flag";
@@ -56,6 +58,8 @@ export default async function ProfilPage() {
   // Répartition : exacts / bons résultats (sans exact) / ratés
   const goodOnly = correct - exact;
   const missed = finished.length - correct;
+
+  const vapidKey = getVapidPublicKey();
 
   // Meilleur prono : le pronostic terminé qui a rapporté le plus de points
   const best = finished
@@ -115,6 +119,15 @@ export default async function ProfilPage() {
           <Stat label="Réussite" value={`${accuracy}%`} />
         </div>
       </Reveal>
+
+      {vapidKey && (
+        <Reveal delay={0.08}>
+          <section className="glass rounded-2xl p-5">
+            <h2 className="mb-3 font-display text-lg font-bold">🔔 Notifications</h2>
+            <EnableNotifications publicKey={vapidKey} />
+          </section>
+        </Reveal>
+      )}
 
       {/* Répartition visuelle des pronos terminés */}
       {finished.length > 0 && (
