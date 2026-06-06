@@ -158,6 +158,14 @@ export default async function AdminPage() {
                   initialAway={m.awayScore}
                   initialStatus={m.status}
                   initialMinute={m.liveMinute}
+                  stage={m.stage}
+                  initialWinner={
+                    m.winnerTeamId === m.homeTeamId
+                      ? "HOME"
+                      : m.winnerTeamId === m.awayTeamId
+                        ? "AWAY"
+                        : null
+                  }
                 />
                 {m.kickoff > now && (
                   <div className="mt-3 flex justify-end border-t border-white/5 pt-2">

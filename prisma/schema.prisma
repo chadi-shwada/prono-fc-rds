@@ -84,6 +84,11 @@ model Match {
   // Minute de jeu affichée pendant un match LIVE (ex: 45). null si inconnu.
   liveMinute Int?
 
+  // Vainqueur du match (id d'équipe), y compris aux T.A.B. quand le score est nul
+  // après prolongation. Renseigné par l'API (score.winner) ou par l'admin.
+  // Sert notamment au bonus vainqueur final (finale gagnée aux tirs au but).
+  winnerTeamId String?
+
   // Ville hôte (id d'une HOST_CITIES) — importé du calendrier officiel
   venueCity String?
 

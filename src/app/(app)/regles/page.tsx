@@ -57,6 +57,18 @@ export default function ReglesPage() {
         </Section>
       </Reveal>
 
+      <Reveal delay={0.13}>
+        <Section title="⏱️ Prolongations & tirs au but">
+          <p>
+            Pour les matchs à élimination directe, on retient le{" "}
+            <strong>score final publié</strong> (prolongation comprise). En cas
+            de match nul réglé aux <strong>tirs au but</strong>, c&apos;est le{" "}
+            <strong>vainqueur qualifié</strong> qui compte pour le bonus —
+            même si l&apos;affiche reste à égalité au tableau.
+          </p>
+        </Section>
+      </Reveal>
+
       <Reveal delay={0.15}>
         <Section title="🏆 Le bonus vainqueur">
           <p>

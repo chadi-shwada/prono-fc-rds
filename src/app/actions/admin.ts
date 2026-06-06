@@ -51,9 +51,22 @@ export async function setResultAction(
   const home = parseScore(formData.get("homeScore"));
   const away = parseScore(formData.get("awayScore"));
   const minute = parseMinute(formData.get("liveMinute"));
+  const winnerSel = (formData.get("winner") ?? "").toString(); // "HOME" | "AWAY" | ""
 
   if (status === MATCH_STATUS.FINISHED && (home === null || away === null)) {
     return { error: "Renseigne les deux scores pour marquer le match terminé." };
+  }
+
+  const match = await prisma.match.findUnique({ where: { id: matchId } });
+  if (!match) return { error: "Match introuvable." };
+
+  // Vainqueur du match : déduit du score, sauf égalité (T.A.B.) où l'admin choisit.
+  let winnerTeamId: string | null = null;
+  if (status === MATCH_STATUS.FINISHED && home !== null && away !== null) {
+    if (home > away) winnerTeamId = match.homeTeamId;
+    else if (away > home) winnerTeamId = match.awayTeamId;
+    else if (winnerSel === "HOME") winnerTeamId = match.homeTeamId;
+    else if (winnerSel === "AWAY") winnerTeamId = match.awayTeamId;
   }
 
   await prisma.match.update({
@@ -64,6 +77,7 @@ export async function setResultAction(
       status,
       // La minute n'a de sens qu'en direct.
       liveMinute: status === MATCH_STATUS.LIVE ? minute : null,
+      winnerTeamId,
     },
   });
 

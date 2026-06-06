@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { syncFromFootballData } from "@/lib/football-api";
 import { recomputeChampionBonus } from "@/lib/scoring";
+import { purgeExpiredSessions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -26,7 +27,8 @@ export async function GET(request: Request) {
   try {
     const result = await syncFromFootballData();
     await recomputeChampionBonus();
-    return NextResponse.json({ ok: true, ...result });
+    const sessionsPurged = await purgeExpiredSessions();
+    return NextResponse.json({ ok: true, ...result, sessionsPurged });
   } catch (e) {
     return NextResponse.json(
       { ok: false, error: e instanceof Error ? e.message : "Erreur de synchro" },

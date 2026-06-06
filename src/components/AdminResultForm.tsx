@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import Flag from "@/components/Flag";
 import ScoreInput from "@/components/ScoreInput";
 import { setResultAction, type AdminState } from "@/app/actions/admin";
-import { MATCH_STATUS } from "@/lib/constants";
+import { MATCH_STATUS, isKnockout } from "@/lib/constants";
 
 type TeamInfo = { name: string; code: string | null };
 
@@ -16,6 +16,8 @@ type Props = {
   initialAway: number | null;
   initialStatus: string;
   initialMinute: number | null;
+  stage: string;
+  initialWinner: "HOME" | "AWAY" | null;
 };
 
 const STATUS_OPTIONS = [
@@ -41,15 +43,22 @@ export default function AdminResultForm({
   initialAway,
   initialStatus,
   initialMinute,
+  stage,
+  initialWinner,
 }: Props) {
   const [state, action, pending] = useActionState<AdminState, FormData>(
     setResultAction,
     undefined,
   );
   const [status, setStatus] = useState(initialStatus);
+  const [winner, setWinner] = useState<"HOME" | "AWAY" | "">(
+    initialWinner ?? "",
+  );
   const [open, setOpen] = useState(false);
   const ddRef = useRef<HTMLDivElement>(null);
   const isLive = status === MATCH_STATUS.LIVE;
+  // Vainqueur à choisir seulement pour un match à élimination terminé (T.A.B.).
+  const showWinner = isKnockout(stage) && status === MATCH_STATUS.FINISHED;
   const current =
     STATUS_OPTIONS.find((o) => o.value === status) ?? STATUS_OPTIONS[0];
 
@@ -69,6 +78,7 @@ export default function AdminResultForm({
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="matchId" value={matchId} />
       <input type="hidden" name="status" value={status} />
+      <input type="hidden" name="winner" value={showWinner ? winner : ""} />
       <span className="flex min-w-0 flex-1 items-center justify-end gap-2 text-right text-sm">
         <span className="truncate">{home.name}</span>
         <Flag code={home.code} size={26} className="shrink-0" />
@@ -119,6 +129,36 @@ export default function AdminResultForm({
           </div>
         )}
       </div>
+
+      {showWinner && (
+        <div
+          className="flex items-center gap-1 text-xs text-slate-300"
+          title="Vainqueur en cas d'égalité après prolongation (tirs au but)"
+        >
+          <span className="text-slate-500">T.A.B.&nbsp;:</span>
+          {(
+            [
+              ["HOME", home.code ?? home.name.slice(0, 3)],
+              ["", "Auto"],
+              ["AWAY", away.code ?? away.name.slice(0, 3)],
+            ] as const
+          ).map(([val, label]) => (
+            <button
+              key={val || "auto"}
+              type="button"
+              onClick={() => setWinner(val)}
+              aria-pressed={winner === val}
+              className={`rounded-md border px-2 py-1 transition ${
+                winner === val
+                  ? "border-amber-400/60 bg-amber-400/20 text-amber-100"
+                  : "border-white/10 bg-white/5 text-slate-300 hover:border-white/25"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {isLive && (
         <label className="flex items-center gap-1.5 text-xs text-red-300">

@@ -1,46 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { SCORING, isKnockout, MATCH_STATUS, STAGES } from "@/lib/constants";
+import { SCORING, MATCH_STATUS, STAGES } from "@/lib/constants";
+import { computePoints } from "@/lib/scoring-core";
 
-export type Score = { homeScore: number; awayScore: number };
-
-/** -1 si l'équipe à l'extérieur gagne, 0 nul, 1 si domicile gagne. */
-function outcome(s: Score): number {
-  return Math.sign(s.homeScore - s.awayScore);
-}
-
-/**
- * Points d'un pronostic comparé au résultat réel (avant multiplicateur de phase).
- * - score exact            → 3
- * - bon résultat + écart   → 2
- * - bon résultat seulement → 1
- * - sinon                  → 0
- */
-export function basePoints(prediction: Score, actual: Score): number {
-  if (
-    prediction.homeScore === actual.homeScore &&
-    prediction.awayScore === actual.awayScore
-  ) {
-    return SCORING.EXACT;
-  }
-  if (outcome(prediction) !== outcome(actual)) {
-    return 0; // mauvais résultat
-  }
-  // bon résultat à partir d'ici
-  const sameDiff =
-    prediction.homeScore - prediction.awayScore ===
-    actual.homeScore - actual.awayScore;
-  return sameDiff ? SCORING.DIFF : SCORING.RESULT;
-}
-
-/** Points finaux d'un pronostic, multiplicateur de phase appliqué. */
-export function computePoints(
-  prediction: Score,
-  actual: Score,
-  stage: string,
-): number {
-  const pts = basePoints(prediction, actual);
-  return isKnockout(stage) ? pts * SCORING.KNOCKOUT_MULTIPLIER : pts;
-}
+export { basePoints, computePoints, type Score } from "@/lib/scoring-core";
 
 /**
  * Recalcule et persiste les points de tous les pronostics d'un match terminé.
@@ -86,8 +48,12 @@ export async function getChampionTeamId(): Promise<string | null> {
     where: { stage: STAGES.FINAL, status: MATCH_STATUS.FINISHED },
     orderBy: { kickoff: "desc" },
   });
-  if (!final || final.homeScore === null || final.awayScore === null) return null;
-  if (final.homeScore === final.awayScore) return null; // nul impossible en finale (TAB) — à gérer à l'admin
+  if (!final) return null;
+  // Vainqueur explicite (API score.winner ou choix admin) — gère les T.A.B.
+  // où le score reste nul après prolongation (ex : France-Argentine 2022).
+  if (final.winnerTeamId) return final.winnerTeamId;
+  if (final.homeScore === null || final.awayScore === null) return null;
+  if (final.homeScore === final.awayScore) return null; // égalité sans vainqueur renseigné → l'admin doit choisir
   return final.homeScore > final.awayScore
     ? final.homeTeamId
     : final.awayTeamId;

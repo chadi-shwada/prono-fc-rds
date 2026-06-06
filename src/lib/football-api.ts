@@ -37,6 +37,12 @@ type ApiTeam = {
   name: string | null;
   tla: string | null;
 } | null;
+// Équipe réellement connue (matchs à élimination = équipes « à déterminer » null).
+type ValidApiTeam = { id: number; name: string; tla: string | null };
+
+function isValidTeam(t: ApiTeam): t is ValidApiTeam {
+  return !!t && t.id != null && !!t.name;
+}
 type ApiMatch = {
   id: number;
   utcDate: string;
@@ -46,7 +52,11 @@ type ApiMatch = {
   minute: number | string | null; // minute de jeu (matchs en cours)
   homeTeam: ApiTeam;
   awayTeam: ApiTeam;
-  score: { fullTime: { home: number | null; away: number | null } };
+  score: {
+    // winner: vainqueur du match (T.A.B. inclus) — HOME_TEAM / AWAY_TEAM / DRAW / null
+    winner: string | null;
+    fullTime: { home: number | null; away: number | null };
+  };
 };
 
 /** Minute de jeu en cours, ou null (hors match en direct / absente de l'API). */
@@ -67,9 +77,7 @@ export type SyncResult = {
  * Anti-collision : si une équipe existe déjà avec le même code (ex: équipe de
  * démo), on lui rattache l'externalId au lieu de créer un doublon.
  */
-async function upsertTeam(t: ApiTeam): Promise<string | null> {
-  // Équipe « à déterminer » (matchs à élimination) = objet aux champs null.
-  if (!t || t.id == null || !t.name) return null;
+async function upsertTeam(t: ValidApiTeam): Promise<string> {
   const externalId = String(t.id);
   const code = (t.tla ?? t.name.slice(0, 3)).toUpperCase();
   const name = teamNameFr(code, t.name); // nom FR si dispo, sinon nom API
@@ -120,44 +128,53 @@ export async function syncFromFootballData(): Promise<SyncResult> {
   const data = (await res.json()) as { matches: ApiMatch[] };
   const matches = data.matches ?? [];
 
-  const seenTeams = new Set<string>();
-  let recomputed = 0;
-
+  // 1) Upsert chaque équipe UNE seule fois (dédoublonnage par id API).
+  // Évite ~200 upserts redondants (une équipe joue plusieurs matchs) et donc
+  // de longues séquences d'écritures — important sous SQLite (mono-writer) et
+  // pour rester sous la limite de durée du cron.
+  const uniqueTeams = new Map<number, ValidApiTeam>();
   for (const m of matches) {
-    const [homeId, awayId] = await Promise.all([
-      upsertTeam(m.homeTeam),
-      upsertTeam(m.awayTeam),
-    ]);
-    if (m.homeTeam) seenTeams.add(String(m.homeTeam.id));
-    if (m.awayTeam) seenTeams.add(String(m.awayTeam.id));
+    if (isValidTeam(m.homeTeam)) uniqueTeams.set(m.homeTeam.id, m.homeTeam);
+    if (isValidTeam(m.awayTeam)) uniqueTeams.set(m.awayTeam.id, m.awayTeam);
+  }
+  const teamIdByExternal = new Map<number, string>();
+  for (const t of uniqueTeams.values()) {
+    teamIdByExternal.set(t.id, await upsertTeam(t));
+  }
+  const localId = (t: ApiTeam): string | null =>
+    isValidTeam(t) ? teamIdByExternal.get(t.id) ?? null : null;
+
+  // 2) Upsert les matchs et recalcule les résultats terminés.
+  let recomputed = 0;
+  for (const m of matches) {
+    const homeId = localId(m.homeTeam);
+    const awayId = localId(m.awayTeam);
 
     const status = mapStatus(m.status);
     const liveMinute = parseMinute(m, status);
+    // Vainqueur du match (T.A.B. inclus) d'après l'API.
+    const winnerTeamId =
+      m.score.winner === "HOME_TEAM"
+        ? homeId
+        : m.score.winner === "AWAY_TEAM"
+          ? awayId
+          : null;
+    const fields = {
+      stage: STAGE_MAP[m.stage] ?? STAGES.GROUP,
+      groupName: parseGroup(m.group),
+      kickoff: new Date(m.utcDate),
+      status,
+      liveMinute,
+      homeTeamId: homeId,
+      awayTeamId: awayId,
+      homeScore: m.score.fullTime.home,
+      awayScore: m.score.fullTime.away,
+      winnerTeamId,
+    };
     const saved = await prisma.match.upsert({
       where: { externalId: String(m.id) },
-      update: {
-        stage: STAGE_MAP[m.stage] ?? STAGES.GROUP,
-        groupName: parseGroup(m.group),
-        kickoff: new Date(m.utcDate),
-        status,
-        liveMinute,
-        homeTeamId: homeId,
-        awayTeamId: awayId,
-        homeScore: m.score.fullTime.home,
-        awayScore: m.score.fullTime.away,
-      },
-      create: {
-        externalId: String(m.id),
-        stage: STAGE_MAP[m.stage] ?? STAGES.GROUP,
-        groupName: parseGroup(m.group),
-        kickoff: new Date(m.utcDate),
-        status,
-        liveMinute,
-        homeTeamId: homeId,
-        awayTeamId: awayId,
-        homeScore: m.score.fullTime.home,
-        awayScore: m.score.fullTime.away,
-      },
+      update: fields,
+      create: { externalId: String(m.id), ...fields },
     });
 
     if (status === MATCH_STATUS.FINISHED) {
@@ -170,7 +187,7 @@ export async function syncFromFootballData(): Promise<SyncResult> {
   await importVenues(prisma);
 
   return {
-    teams: seenTeams.size,
+    teams: uniqueTeams.size,
     matches: matches.length,
     finishedRecomputed: recomputed,
   };

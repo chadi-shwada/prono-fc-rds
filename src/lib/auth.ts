@@ -31,6 +31,14 @@ export async function createSession(userId: string): Promise<void> {
   });
 }
 
+/** Supprime les sessions expirées de la base (appelé périodiquement par le cron). */
+export async function purgeExpiredSessions(): Promise<number> {
+  const { count } = await prisma.session.deleteMany({
+    where: { expiresAt: { lt: new Date() } },
+  });
+  return count;
+}
+
 /** Supprime la session courante (déconnexion). */
 export async function destroySession(): Promise<void> {
   const store = await cookies();
