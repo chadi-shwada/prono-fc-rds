@@ -156,6 +156,34 @@ body {
   to { transform: translateX(-50%); }
 }
 
+/* Lueur emerald pulsée (bouton d'action principal de la landing) */
+.pulse-glow {
+  animation: pulseGlow 2.4s ease-in-out infinite;
+}
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.5);
+  }
+  50% {
+    box-shadow: 0 12px 48px -6px rgba(16, 185, 129, 0.9);
+  }
+}
+
+/* Indicateur « défile vers le bas » qui rebondit */
+.scroll-cue {
+  animation: scrollCue 1.8s ease-in-out infinite;
+}
+@keyframes scrollCue {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(7px);
+    opacity: 1;
+  }
+}
+
 /* Halo doré pulsé (1er du classement, vainqueur) */
 .glow-gold {
   animation: glowGold 2.6s ease-in-out infinite;
@@ -243,7 +271,9 @@ body {
   .glow-gold,
   .marquee-track,
   .particle-float,
-  .skeleton::after {
+  .skeleton::after,
+  .pulse-glow,
+  .scroll-cue {
     animation: none;
   }
   .card-hover:hover {

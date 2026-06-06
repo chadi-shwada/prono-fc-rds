@@ -3,10 +3,13 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { SCORING } from "@/lib/constants";
-import Logo from "@/components/Logo";
 import Countdown from "@/components/Countdown";
 import FlagsMarquee from "@/components/FlagsMarquee";
+import Particles from "@/components/Particles";
 import Reveal from "@/components/Reveal";
+import Logo from "@/components/Logo";
+import LandingHero from "@/components/landing/LandingHero";
+import FeatureCard from "@/components/landing/FeatureCard";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +24,10 @@ export default async function Landing() {
   const codes = teams.map((t) => t.code);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="relative flex min-h-screen flex-col">
+      {/* Ambiance : ballons/coupes qui flottent (l'aurore est dans le layout racine) */}
+      <Particles />
+
       {/* Barre publique */}
       <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/70 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
@@ -39,51 +45,13 @@ export default async function Landing() {
       </header>
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-16 sm:px-6">
-        {/* Hero */}
-        <section className="flex flex-col items-center gap-5 pt-12 text-center sm:pt-16">
-          <Reveal>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-slate-300">
-              ⚽ Coupe du Monde 2026 · entre collègues RATP
-            </span>
-          </Reveal>
-
-          <Reveal delay={0.05}>
-            <div className="float mx-auto w-fit drop-shadow-[0_0_30px_rgba(16,185,129,0.45)]">
-              <Logo size={84} className="rounded-[20px]" />
-            </div>
-          </Reveal>
-
-          <Reveal delay={0.1}>
-            <h1 className="font-display text-5xl font-extrabold leading-tight sm:text-6xl">
-              Prono FC <span className="text-gradient">RDS</span>
-            </h1>
-          </Reveal>
-
-          <Reveal delay={0.15}>
-            <p className="max-w-xl text-balance text-lg text-slate-300">
-              Le pronostic maison de la Coupe du Monde 2026. Devine les scores,
-              grimpe au classement et chambre tes collègues — du match d&apos;ouverture
-              à la finale.
-            </p>
-          </Reveal>
-
-          <Reveal delay={0.2}>
-            <div className="flex flex-col items-center gap-3 sm:flex-row">
-              <Link
-                href="/login"
-                className="shimmer rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 px-6 py-3 font-display text-lg font-bold text-emerald-950 shadow-lg shadow-emerald-500/25 transition hover:shadow-emerald-500/45"
-              >
-                Entrer dans le jeu ⚽
-              </Link>
-              <span className="text-xs text-slate-400">🔒 Accès sur invitation</span>
-            </div>
-          </Reveal>
-        </section>
+        {/* Hero animé */}
+        <LandingHero />
 
         {/* Compte à rebours */}
         {firstMatch && (
-          <Reveal delay={0.25}>
-            <div className="mx-auto mt-12 max-w-md">
+          <Reveal delay={0.1}>
+            <div className="mx-auto mt-10 max-w-md">
               <Countdown target={firstMatch.kickoff.toISOString()} />
             </div>
           </Reveal>
@@ -97,20 +65,20 @@ export default async function Landing() {
             </h2>
           </Reveal>
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
-            <Feature
+            <FeatureCard
               delay={0.05}
               icon="⚽"
               title="Pronostique chaque match"
               text="Un score à deviner avant chaque coup d'envoi. Plus tu es précis, plus tu marques de points."
             />
-            <Feature
-              delay={0.1}
+            <FeatureCard
+              delay={0.12}
               icon="📈"
               title="Grimpe au classement"
               text="Points en temps réel, classement par journée, badges et joueur du jour."
             />
-            <Feature
-              delay={0.15}
+            <FeatureCard
+              delay={0.19}
               icon="🏆"
               title="Le bonus champion"
               text="Désigne le vainqueur de la Coupe avant le 1er match : +10 pts si tu vises juste."
@@ -135,8 +103,8 @@ export default async function Landing() {
           </Reveal>
           <Reveal delay={0.1}>
             <p className="mt-4 text-center text-sm text-slate-400">
-              Les phases finales comptent <strong>double</strong> (×
-              {SCORING.KNOCKOUT_MULTIPLIER}) — chaque prono devient décisif.
+              Les phases finales comptent <strong>double</strong>{" "}
+              (×{SCORING.KNOCKOUT_MULTIPLIER}) — chaque prono devient décisif.
             </p>
           </Reveal>
         </section>
@@ -153,7 +121,10 @@ export default async function Landing() {
         {/* CTA final */}
         <section className="mt-16">
           <Reveal>
-            <div className="glass rounded-3xl p-8 text-center sm:p-10">
+            <div className="glass relative overflow-hidden rounded-3xl p-8 text-center sm:p-10">
+              <div className="float pointer-events-none absolute -right-6 -top-6 text-7xl opacity-10">
+                🏆
+              </div>
               <h2 className="font-display text-3xl font-extrabold">
                 Prêt à entrer sur le terrain ?
               </h2>
@@ -163,7 +134,7 @@ export default async function Landing() {
               </p>
               <Link
                 href="/login"
-                className="mt-6 inline-block rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 px-6 py-3 font-display text-lg font-bold text-emerald-950 shadow-lg shadow-emerald-500/25 transition hover:shadow-emerald-500/45"
+                className="pulse-glow mt-6 inline-block rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 px-7 py-3.5 font-display text-lg font-bold text-emerald-950 transition-transform duration-200 hover:scale-[1.04] active:scale-95"
               >
                 Faire mes pronos ⚽
               </Link>
@@ -179,28 +150,6 @@ export default async function Landing() {
   );
 }
 
-function Feature({
-  icon,
-  title,
-  text,
-  delay,
-}: {
-  icon: string;
-  title: string;
-  text: string;
-  delay: number;
-}) {
-  return (
-    <Reveal delay={delay}>
-      <div className="card-hover glass h-full rounded-2xl p-5">
-        <div className="text-3xl">{icon}</div>
-        <h3 className="mt-3 font-display text-lg font-bold">{title}</h3>
-        <p className="mt-1.5 text-sm leading-relaxed text-slate-400">{text}</p>
-      </div>
-    </Reveal>
-  );
-}
-
 function ScoreCard({
   points,
   label,
@@ -212,7 +161,7 @@ function ScoreCard({
 }) {
   return (
     <div
-      className={`glass rounded-2xl p-4 text-center ${
+      className={`glass rounded-2xl p-4 text-center transition-transform duration-200 hover:scale-105 ${
         gold ? "border-amber-300/30" : ""
       }`}
     >

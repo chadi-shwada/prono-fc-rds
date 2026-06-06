@@ -42,6 +42,7 @@ export default function Image() {
         >
           <img
             src={trophySrc}
+            alt=""
             width={188}
             height={188}
             style={{ position: "absolute", top: 0, left: 0 }}
