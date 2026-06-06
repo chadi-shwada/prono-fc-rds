@@ -45,3 +45,5 @@ next-env.d.ts
 # base de données locale (SQLite)
 /prisma/*.db
 /prisma/*.db-journal
+/prisma/*.db-wal
+/prisma/*.db-shm
