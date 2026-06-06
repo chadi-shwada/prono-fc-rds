@@ -11,6 +11,7 @@ import LiveBadge from "@/components/LiveBadge";
 import LiveScore from "@/components/LiveScore";
 import LiveRefresher from "@/components/LiveRefresher";
 import Avatar from "@/components/Avatar";
+import Reactions from "@/components/Reactions";
 
 export const dynamic = "force-dynamic";
 
@@ -28,9 +29,18 @@ export default async function MatchDetailPage({
       homeTeam: true,
       awayTeam: true,
       predictions: { include: { user: true } },
+      reactions: { select: { emoji: true, userId: true } },
     },
   });
   if (!match) notFound();
+
+  // Réactions : comptage par emoji + celles de l'utilisateur courant.
+  const reactionCounts: Record<string, number> = {};
+  const myReactions: string[] = [];
+  for (const r of match.reactions) {
+    reactionCounts[r.emoji] = (reactionCounts[r.emoji] ?? 0) + 1;
+    if (r.userId === user.id) myReactions.push(r.emoji);
+  }
 
   const now = new Date();
   const locked = match.kickoff <= now;
@@ -129,6 +139,20 @@ export default async function MatchDetailPage({
             </span>
           </div>
           </div>
+        </div>
+      </Reveal>
+
+      {/* Réactions (chambrage) */}
+      <Reveal delay={0.07}>
+        <div className="glass rounded-2xl p-4">
+          <div className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Ambiance 🍿
+          </div>
+          <Reactions
+            matchId={match.id}
+            initialCounts={reactionCounts}
+            initialMine={myReactions}
+          />
         </div>
       </Reveal>
 

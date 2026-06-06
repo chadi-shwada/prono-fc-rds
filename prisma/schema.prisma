@@ -23,6 +23,7 @@ model User {
   sessions            Session[]
   predictions         Prediction[]
   championPrediction  ChampionPrediction?
+  reactions           Reaction[]
 }
 
 /// Session de connexion (cookie -> token).
@@ -93,6 +94,7 @@ model Match {
   venueCity String?
 
   predictions Prediction[]
+  reactions   Reaction[]
   updatedAt   DateTime     @updatedAt
 
   @@index([kickoff])
@@ -114,6 +116,20 @@ model Prediction {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, matchId])
+  @@index([matchId])
+}
+
+/// Réaction emoji d'un joueur sur un match (chambrage entre collègues).
+model Reaction {
+  id        String   @id @default(cuid())
+  userId    String
+  matchId   String
+  emoji     String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, matchId, emoji])
   @@index([matchId])
 }
 
