@@ -1,6 +1,6 @@
 services:
   app:
-    build: .
+    image: ghcr.io/chadi-shwada/prono-fc-rds:latest
     restart: unless-stopped
     environment:
       NODE_ENV: production
