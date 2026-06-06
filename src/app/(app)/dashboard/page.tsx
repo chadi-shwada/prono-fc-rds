@@ -6,6 +6,7 @@ import { getEngagement } from "@/lib/engagement";
 import { getVapidPublicKey } from "@/lib/push";
 import { formatKickoff } from "@/lib/format";
 import NotifNudge from "@/components/NotifNudge";
+import IosInstallPrompt from "@/components/IosInstallPrompt";
 import Reveal from "@/components/Reveal";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import Countdown from "@/components/Countdown";
@@ -84,6 +85,7 @@ export default async function HomePage() {
         </div>
       </Reveal>
 
+      <IosInstallPrompt />
       {vapidKey && <NotifNudge publicKey={vapidKey} />}
 
       {(engagement.todayTotal > 0 || engagement.streak > 0) && (
