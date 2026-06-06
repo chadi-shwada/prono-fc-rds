@@ -51,9 +51,17 @@ export default async function CartePage() {
       </Reveal>
 
       <Reveal delay={0.15}>
-        <p className="text-center text-xs text-slate-500">
-          🇺🇸 États-Unis (11 villes) · 🇨🇦 Canada (2) · 🇲🇽 Mexique (3)
-        </p>
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs text-slate-400">
+          <span className="flex items-center gap-1.5">
+            <Flag code="USA" size={16} /> États-Unis (11 villes)
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Flag code="CAN" size={16} /> Canada (2)
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Flag code="MEX" size={16} /> Mexique (3)
+          </span>
+        </div>
       </Reveal>
 
       <Reveal delay={0.2}>

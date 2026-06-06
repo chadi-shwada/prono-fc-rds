@@ -81,7 +81,7 @@ export default function HostMap() {
       style={{
         aspectRatio: `${VB_W} / ${VB_H}`,
         background:
-          "radial-gradient(120% 95% at 12% 8%, #7c3aed 0%, #6d28d9 32%, #4c1d95 58%, #2e1065 100%)",
+          "radial-gradient(120% 95% at 12% 8%, #0b3b34 0%, #0c2740 36%, #0a1426 66%, #060a13 100%)",
       }}
     >
       <div

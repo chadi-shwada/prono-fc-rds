@@ -19,8 +19,8 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Navigation principale"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-slate-950/90 backdrop-blur md:hidden"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      className="fixed inset-x-3 z-30 rounded-2xl border border-white/10 bg-slate-950/90 shadow-lg shadow-black/50 backdrop-blur md:hidden"
+      style={{ bottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}
     >
       <ul className="mx-auto flex max-w-md items-stretch">
         {TABS.map((t) => {
