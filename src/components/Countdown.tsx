@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 type Parts = { d: number; h: number; m: number; s: number };
 
-function diffParts(target: number): Parts {
-  const ms = Math.max(0, target - Date.now());
+function diffParts(target: number, now: number): Parts {
+  const ms = Math.max(0, target - now);
   return {
     d: Math.floor(ms / 86_400_000),
     h: Math.floor((ms / 3_600_000) % 24),
@@ -14,18 +14,23 @@ function diffParts(target: number): Parts {
   };
 }
 
+// Horloge à la seconde, partagée par useSyncExternalStore : le snapshot ne
+// change qu'une fois par seconde (valeur stable entre deux ticks → pas de
+// boucle de rendu), et il vaut null côté serveur (évite tout mismatch SSR).
+function subscribe(onChange: () => void) {
+  const id = setInterval(onChange, 250);
+  return () => clearInterval(id);
+}
+const nowSecond = () => Math.floor(Date.now() / 1000);
+const serverSnapshot = () => null;
+
 /** Compte à rebours en direct jusqu'à `target` (ISO). */
 export default function Countdown({ target }: { target: string }) {
   const targetMs = new Date(target).getTime();
-  const [parts, setParts] = useState<Parts | null>(null);
+  const second = useSyncExternalStore(subscribe, nowSecond, serverSnapshot);
 
-  useEffect(() => {
-    setParts(diffParts(targetMs));
-    const id = setInterval(() => setParts(diffParts(targetMs)), 1000);
-    return () => clearInterval(id);
-  }, [targetMs]);
-
-  const started = parts !== null && targetMs <= Date.now();
+  const parts = second === null ? null : diffParts(targetMs, second * 1000);
+  const started = second !== null && second * 1000 >= targetMs;
 
   if (started) {
     return (

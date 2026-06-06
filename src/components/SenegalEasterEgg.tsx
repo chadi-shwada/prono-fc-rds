@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import confetti from "canvas-confetti";
 import Flag from "@/components/Flag";
@@ -14,23 +14,7 @@ export default function SenegalEasterEgg() {
   const buffer = useRef("");
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key.length !== 1) return;
-      const c = e.key.toLowerCase().replace(/[éèê]/g, "e");
-      if (!/[a-z]/.test(c)) return;
-      buffer.current = (buffer.current + c).slice(-SECRET.length);
-      if (buffer.current === SECRET) {
-        buffer.current = "";
-        trigger();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function fireConfetti() {
+  const fireConfetti = useCallback(() => {
     const shots = [
       { spread: 26, startVelocity: 55 },
       { spread: 60 },
@@ -46,14 +30,29 @@ export default function SenegalEasterEgg() {
         ...(i % 2 ? { angle: 60 } : { angle: 120 }),
       }),
     );
-  }
+  }, []);
 
-  function trigger() {
+  const trigger = useCallback(() => {
     setOpen(true);
     fireConfetti();
     if (closeTimer.current) clearTimeout(closeTimer.current);
     closeTimer.current = setTimeout(() => setOpen(false), 7000);
-  }
+  }, [fireConfetti]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.length !== 1) return;
+      const c = e.key.toLowerCase().replace(/[éèê]/g, "e");
+      if (!/[a-z]/.test(c)) return;
+      buffer.current = (buffer.current + c).slice(-SECRET.length);
+      if (buffer.current === SECRET) {
+        buffer.current = "";
+        trigger();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [trigger]);
 
   return (
     <AnimatePresence>

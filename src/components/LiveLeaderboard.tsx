@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 import { motion } from "motion/react";
 import type { LeaderboardRow } from "@/lib/leaderboard";
 import Avatar from "@/components/Avatar";
@@ -8,6 +8,13 @@ import AnimatedBar from "@/components/AnimatedBar";
 import Tooltip from "@/components/Tooltip";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
+
+/** Position de chaque joueur (userId → index) dans une liste classée. */
+function rankMap(rows: LeaderboardRow[]): Map<string, number> {
+  const m = new Map<string, number>();
+  rows.forEach((r, i) => m.set(r.userId, i));
+  return m;
+}
 
 /**
  * Classement animé : les lignes se réordonnent en douceur (motion `layout`)
@@ -24,24 +31,29 @@ export default function LiveLeaderboard({
   meId: string;
   showDelta?: boolean;
 }) {
-  const prevRanks = useRef<Map<string, number>>(new Map());
   const topScore = rows[0]?.points || 1;
 
-  // Delta de position depuis le rendu précédent (positif = remontée).
-  const deltas = new Map<string, number>();
-  rows.forEach((r, i) => {
-    const prev = prevRanks.current.get(r.userId);
-    if (showDelta && prev !== undefined && prev !== i) {
-      deltas.set(r.userId, prev - i);
-    }
-  });
+  // Compare l'ordre courant à celui du rendu précédent pour afficher les flèches
+  // ▲▼. On mémorise l'ordre + les deltas dans le state et on l'ajuste pendant le
+  // rendu quand `rows` change (pattern React « info du rendu précédent »), ce qui
+  // évite d'accéder à une ref pendant le rendu.
+  const [snapshot, setSnapshot] = useState<{
+    rows: LeaderboardRow[];
+    ranks: Map<string, number>;
+    deltas: Map<string, number>;
+  }>(() => ({ rows, ranks: rankMap(rows), deltas: new Map() }));
 
-  // Mémorise l'ordre courant pour le prochain rendu.
-  useEffect(() => {
-    const next = new Map<string, number>();
-    rows.forEach((r, i) => next.set(r.userId, i));
-    prevRanks.current = next;
-  });
+  if (snapshot.rows !== rows) {
+    const deltas = new Map<string, number>();
+    if (showDelta) {
+      rows.forEach((r, i) => {
+        const prev = snapshot.ranks.get(r.userId);
+        if (prev !== undefined && prev !== i) deltas.set(r.userId, prev - i);
+      });
+    }
+    setSnapshot({ rows, ranks: rankMap(rows), deltas });
+  }
+  const deltas = snapshot.deltas;
 
   return (
     <ol className="flex flex-col gap-2.5">

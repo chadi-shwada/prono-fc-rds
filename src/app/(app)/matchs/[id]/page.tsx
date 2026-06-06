@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatKickoff } from "@/lib/format";
 import { teamColor } from "@/lib/teamColor";
-import { STAGE_LABELS, MATCH_STATUS, STAGES, type Stage } from "@/lib/constants";
+import { STAGE_LABELS, MATCH_STATUS, type Stage } from "@/lib/constants";
 import Reveal from "@/components/Reveal";
 import Flag from "@/components/Flag";
 import LiveBadge from "@/components/LiveBadge";
