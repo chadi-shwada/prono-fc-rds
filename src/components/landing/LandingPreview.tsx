@@ -8,8 +8,8 @@ const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
 const RANKING = [
   { name: "Chadi", pts: 48, medal: "🥇", width: "100%" },
-  { name: "Karim", pts: 41, medal: "🥈", width: "85%" },
-  { name: "Sophie", pts: 37, medal: "🥉", width: "77%" },
+  { name: "Moussa", pts: 41, medal: "🥈", width: "85%" },
+  { name: "Xavier", pts: 37, medal: "🥉", width: "77%" },
 ];
 
 // Aperçu « produit » : reconstitue une carte de pronostic et un mini-classement
