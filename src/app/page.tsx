@@ -12,7 +12,7 @@ import FeatureCard from "@/components/landing/FeatureCard";
 import LandingPreview from "@/components/landing/LandingPreview";
 import LandingConfetti from "@/components/landing/LandingConfetti";
 import WorkPcNotice from "@/components/landing/WorkPcNotice";
-import { appName, appTagline } from "@/lib/features";
+import { appName, appTagline, prize } from "@/lib/features";
 import { isDiscordEnabled } from "@/lib/discord";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +29,7 @@ export default async function Landing() {
   ]);
   const codes = teams.map((t) => t.code);
   const discordLogin = isDiscordEnabled();
+  const thePrize = prize();
 
   return (
     <div className="relative flex min-h-screen flex-col">
@@ -61,6 +62,17 @@ export default async function Landing() {
 
         {/* Hero (serveur + CSS) */}
         <LandingHero />
+
+        {/* Lot du grand gagnant (si défini) */}
+        {thePrize && (
+          <div className="rise-in mx-auto mt-8 max-w-xl rounded-2xl border border-amber-300/40 bg-gradient-to-br from-amber-300/15 to-transparent p-4 text-center">
+            <span className="text-2xl">🎁</span>
+            <p className="mt-1 font-display text-lg font-bold">
+              Le grand gagnant remporte{" "}
+              <span className="text-amber-300">{thePrize}</span> !
+            </p>
+          </div>
+        )}
 
         {/* Compte à rebours */}
         {firstMatch && (

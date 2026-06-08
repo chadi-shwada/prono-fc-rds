@@ -17,6 +17,7 @@ services:
       APP_NAME: ${APP_NAME:-Prono FC RDS}
       APP_TAGLINE: ${APP_TAGLINE:-entre collègues RATP}
       PREVIEW_NAMES: ${PREVIEW_NAMES:-Chadi,Moussa,Xavier}
+      PRIZE: ${PRIZE:-}
       SEED_ADMIN_NAME: ${SEED_ADMIN_NAME}
       SEED_INVITE_CODE: ${SEED_INVITE_CODE}
       # Notifications push (Web Push) — générer avec: npx web-push generate-vapid-keys
@@ -80,6 +81,7 @@ services:
       APP_NAME: ${DISCORD_APP_NAME:-Pronos}
       APP_TAGLINE: ${DISCORD_APP_TAGLINE:-entre potes}
       PREVIEW_NAMES: ${DISCORD_PREVIEW_NAMES:-Chadi,Procy,Andrew}
+      PRIZE: ${DISCORD_PRIZE:-1 mois de Discord Nitro}
       SEED_ADMIN_NAME: ${DISCORD_SEED_ADMIN_NAME}
       SEED_INVITE_CODE: ${DISCORD_SEED_INVITE_CODE}
       VAPID_PUBLIC_KEY: ${DISCORD_VAPID_PUBLIC_KEY:-}

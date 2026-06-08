@@ -17,6 +17,11 @@ export function appTagline(): string {
   return process.env.APP_TAGLINE || "entre collègues RATP";
 }
 
+/** Lot du grand gagnant, affiché sur la landing si défini (PRIZE). */
+export function prize(): string {
+  return (process.env.PRIZE || "").trim();
+}
+
 /** Noms d'exemple affichés dans l'aperçu de la landing (PREVIEW_NAMES="a,b,c"). */
 export function previewNames(): [string, string, string] {
   const parts = (process.env.PREVIEW_NAMES || "Chadi,Moussa,Xavier")
