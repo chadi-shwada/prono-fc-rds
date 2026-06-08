@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { motion } from "motion/react";
 import confetti from "canvas-confetti";
 import Flag from "@/components/Flag";
@@ -29,7 +29,16 @@ export default function PredictionForm({
     savePredictionAction,
     undefined,
   );
-  const saved = state?.ok;
+
+  // Valeurs courantes (remontées par les ScoreInput) pour comparer au prono
+  // sauvegardé et refléter l'état « enregistré » / « modifier ».
+  const savedHome = initialHome != null ? String(initialHome) : "";
+  const savedAway = initialAway != null ? String(initialAway) : "";
+  const hadPrediction = savedHome !== "" && savedAway !== "";
+  const [curHome, setCurHome] = useState(savedHome);
+  const [curAway, setCurAway] = useState(savedAway);
+  const isSaved =
+    hadPrediction && curHome === savedHome && curAway === savedAway;
 
   useEffect(() => {
     if (state?.ok) {
@@ -58,12 +67,14 @@ export default function PredictionForm({
           name="homeScore"
           defaultValue={initialHome}
           ariaLabel={`Score ${home.name}`}
+          onValueChange={setCurHome}
         />
         <span className="text-slate-500">·</span>
         <ScoreInput
           name="awayScore"
           defaultValue={initialAway}
           ariaLabel={`Score ${away.name}`}
+          onValueChange={setCurAway}
         />
 
         <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
@@ -74,15 +85,21 @@ export default function PredictionForm({
 
       <motion.button
         type="submit"
-        disabled={pending}
+        disabled={pending || isSaved}
         whileTap={{ scale: 0.96 }}
-        className={`self-center rounded-full px-5 py-1.5 text-sm font-semibold transition disabled:opacity-50 ${
-          saved
+        className={`self-center rounded-full px-5 py-1.5 text-sm font-semibold transition ${
+          isSaved
             ? "bg-emerald-500/20 text-emerald-300"
-            : "bg-emerald-500 text-emerald-950 hover:bg-emerald-400"
+            : "bg-emerald-500 text-emerald-950 hover:bg-emerald-400 disabled:opacity-50"
         }`}
       >
-        {pending ? "…" : saved ? "✓ Enregistré" : "Valider mon prono"}
+        {pending
+          ? "…"
+          : isSaved
+            ? "✓ Enregistré"
+            : hadPrediction
+              ? "Modifier mon prono"
+              : "Valider mon prono"}
       </motion.button>
     </form>
   );

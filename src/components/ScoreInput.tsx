@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /** Saisie d'un score avec flèches ▲▼ stylées (remplace les spinners natifs). */
 export default function ScoreInput({
   name,
   defaultValue,
   ariaLabel,
+  onValueChange,
 }: {
   name: string;
   defaultValue?: number | null;
   ariaLabel?: string;
+  onValueChange?: (value: string) => void;
 }) {
   const [v, setV] = useState(
     defaultValue === undefined || defaultValue === null
@@ -22,6 +24,11 @@ export default function ScoreInput({
       const n = prev === "" ? 0 : parseInt(prev, 10);
       return String(Math.max(0, Math.min(99, n + delta)));
     });
+
+  // Notifie le parent de la valeur courante (pour refléter l'état « enregistré »).
+  useEffect(() => {
+    onValueChange?.(v);
+  }, [v, onValueChange]);
 
   return (
     <div className="flex items-stretch overflow-hidden rounded-lg border border-white/10 bg-white/5 transition focus-within:border-emerald-400 focus-within:bg-white/10">
