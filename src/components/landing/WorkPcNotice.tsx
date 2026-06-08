@@ -23,9 +23,9 @@ export default function WorkPcNotice() {
 
   return (
     <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-center text-sm text-amber-100">
-      📱 <strong>Ouvre Prono FC RDS depuis ton téléphone</strong> pour jouer.
-      Sur les PC du réseau de l&apos;entreprise, l&apos;application ne peut pas se
-      charger.
+      📱 <strong>Ouvre Prono FC RDS depuis ton téléphone</strong>{" "}
+      pour jouer. Sur les PC du réseau de l&apos;entreprise, l&apos;application ne
+      peut pas se charger.
     </div>
   );
 }
