@@ -29,8 +29,12 @@ export default function Countdown({ target }: { target: string }) {
   const targetMs = new Date(target).getTime();
   const second = useSyncExternalStore(subscribe, nowSecond, serverSnapshot);
 
-  const parts = second === null ? null : diffParts(targetMs, second * 1000);
-  const started = second !== null && second * 1000 >= targetMs;
+  // Tant que le JS n'a pas tourné (SSR, ou JS bloqué par le réseau), on n'affiche
+  // rien plutôt qu'un « 00 00 00 00 » figé et trompeur.
+  if (second === null) return null;
+
+  const parts = diffParts(targetMs, second * 1000);
+  const started = second * 1000 >= targetMs;
 
   if (started) {
     return (
