@@ -14,8 +14,8 @@ const FALLBACK_CODES = [
 // Intro « coup d'envoi » de la landing (instance Discord uniquement) : ambiance
 // Coupe du Monde — pelouse + projecteurs de stade, ballon qui arrive en tournant,
 // titre « Coupe du Monde 2026 » en or (couleur du trophée FIFA) + trophées, puis
-// fondu avec un double burst de confettis. Joué une fois par session, désactivé
-// si l'utilisateur préfère moins d'animations.
+// fondu avec un double burst de confettis. Rejoué à chaque chargement de la
+// landing, désactivé si l'utilisateur préfère moins d'animations.
 export default function LandingOpening({
   name,
   codes,
@@ -28,8 +28,6 @@ export default function LandingOpening({
 
   useEffect(() => {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    if (sessionStorage.getItem("seenOpening")) return;
-    sessionStorage.setItem("seenOpening", "1");
 
     setPhase("in");
     const tOut = setTimeout(() => {
