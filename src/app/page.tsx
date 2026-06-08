@@ -12,7 +12,7 @@ import Logo from "@/components/Logo";
 import LandingHero from "@/components/landing/LandingHero";
 import FeatureCard from "@/components/landing/FeatureCard";
 import LandingPreview from "@/components/landing/LandingPreview";
-import LandingConfetti from "@/components/landing/LandingConfetti";
+import LandingOpening from "@/components/landing/LandingOpening";
 import WorkPcNotice from "@/components/landing/WorkPcNotice";
 import { appName, appTagline, prize } from "@/lib/features";
 import { isDiscordEnabled } from "@/lib/discord";
@@ -41,8 +41,8 @@ export default async function Landing() {
     <div className="relative flex min-h-screen flex-col">
       {/* Ambiance : ballons/coupes qui flottent (l'aurore est dans le layout racine) */}
       <Particles />
-      {/* Petit clin d'œil festif à l'arrivée */}
-      <LandingConfetti />
+      {/* Intro « coup d'envoi » : splash logo + Coupe du Monde 2026 + confettis */}
+      <LandingOpening name={appName()} />
 
       {/* Barre publique */}
       <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/70 backdrop-blur">

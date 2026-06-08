@@ -172,6 +172,38 @@ body {
   }
 }
 
+/* Intro « coup d'envoi » de la landing : pop du logo + montée du titre */
+.opening-pop {
+  animation: openingPop 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes openingPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-8deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.08) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+.opening-rise {
+  animation: openingRise 0.7s ease-out 0.25s both;
+}
+@keyframes openingRise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Lueur emerald pulsée (bouton d'action principal de la landing) */
 .pulse-glow {
   animation: pulseGlow 2.4s ease-in-out infinite;
@@ -290,6 +322,8 @@ body {
   .skeleton::after,
   .pulse-glow,
   .scroll-cue,
+  .opening-pop,
+  .opening-rise,
   .rise-in {
     animation: none;
   }
