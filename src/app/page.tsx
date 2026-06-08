@@ -51,7 +51,7 @@ export default async function Landing() {
             <Logo size={28} />
             <span>{appName()}</span>
           </div>
-          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1.5 text-sm font-medium text-slate-300 backdrop-blur sm:flex">
+          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-sm font-medium text-slate-300 backdrop-blur sm:flex">
             <a
               href="#comment"
               className="rounded-full px-3.5 py-1.5 transition hover:bg-white/10 hover:text-white"
@@ -73,7 +73,7 @@ export default async function Landing() {
           </nav>
           <Link
             href="/login"
-            className="rounded-lg border border-white/10 bg-white/5 px-4 py-1.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
+            className="rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
           >
             Se connecter
           </Link>
