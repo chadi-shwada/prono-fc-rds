@@ -1,4 +1,5 @@
 import Reveal from "@/components/Reveal";
+import SenegalHint from "@/components/SenegalHint";
 import { SCORING } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -103,13 +104,9 @@ export default function ReglesPage() {
         </Section>
       </Reveal>
 
-      {/* Indice (énigme) vers l'easter egg : taper « senegal » au clavier 🦁 */}
+      {/* Indice vers l'easter egg : tapoter le lion 🦁 (mobile) ou taper « senegal » */}
       <Reveal delay={0.3}>
-        <p className="select-none text-center text-xs italic leading-relaxed text-slate-600">
-          🦁 On raconte qu&apos;un lion sommeille quelque part dans ces pages…
-          <br />
-          pour le réveiller, tape son royaume au clavier.
-        </p>
+        <SenegalHint />
       </Reveal>
     </div>
   );

@@ -50,8 +50,14 @@ export default function SenegalEasterEgg() {
         trigger();
       }
     };
+    // Déclencheur tactile (mobile) : tout élément peut émettre cet évènement.
+    const onCustom = () => trigger();
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("prono:senegal", onCustom);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("prono:senegal", onCustom);
+    };
   }, [trigger]);
 
   return (
