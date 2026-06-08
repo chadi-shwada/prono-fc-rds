@@ -1,5 +1,6 @@
 import Reveal from "@/components/Reveal";
 import SenegalHint from "@/components/SenegalHint";
+import { isEasterEggEnabled } from "@/lib/features";
 import { SCORING } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -105,9 +106,11 @@ export default function ReglesPage() {
       </Reveal>
 
       {/* Indice vers l'easter egg : tapoter le lion 🦁 (mobile) ou taper « senegal » */}
-      <Reveal delay={0.3}>
-        <SenegalHint />
-      </Reveal>
+      {isEasterEggEnabled() && (
+        <Reveal delay={0.3}>
+          <SenegalHint />
+        </Reveal>
+      )}
     </div>
   );
 }

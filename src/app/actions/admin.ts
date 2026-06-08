@@ -138,6 +138,23 @@ export async function deleteUserAction(userId: string): Promise<void> {
   revalidatePath("/classement");
 }
 
+/** Promeut ou rétrograde un utilisateur (admin). */
+export async function toggleAdminAction(formData: FormData): Promise<void> {
+  const me = await requireAdmin();
+  const userId = (formData.get("userId") ?? "").toString();
+  if (!userId || userId === me.id) return; // pas soi-même (anti-verrouillage)
+  const u = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isAdmin: true },
+  });
+  if (!u) return;
+  await prisma.user.update({
+    where: { id: userId },
+    data: { isAdmin: !u.isAdmin },
+  });
+  revalidatePath("/admin");
+}
+
 /** Active / désactive un code d'invitation. */
 export async function toggleCodeActiveAction(formData: FormData): Promise<void> {
   await requireAdmin();

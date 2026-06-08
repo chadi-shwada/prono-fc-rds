@@ -5,6 +5,7 @@ import NavBar from "@/components/NavBar";
 import BottomNav from "@/components/BottomNav";
 import Particles from "@/components/Particles";
 import SenegalEasterEgg from "@/components/SenegalEasterEgg";
+import { isEasterEggEnabled } from "@/lib/features";
 
 export default async function AppLayout({
   children,
@@ -17,7 +18,7 @@ export default async function AppLayout({
   return (
     <div className="flex min-h-screen flex-col text-slate-100">
       <Particles />
-      <SenegalEasterEgg />
+      {isEasterEggEnabled() && <SenegalEasterEgg />}
       <NavBar user={user} />
       <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 pt-6 pb-8 sm:px-6 lg:px-10">
         {children}

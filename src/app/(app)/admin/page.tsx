@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatKickoff } from "@/lib/format";
 import { STAGE_LABELS, type Stage } from "@/lib/constants";
-import { toggleCodeActiveAction } from "@/app/actions/admin";
+import { toggleCodeActiveAction, toggleAdminAction } from "@/app/actions/admin";
 import AdminResultForm from "@/components/AdminResultForm";
 import SyncButton from "@/components/SyncButton";
 import CreateCodeForm from "@/components/CreateCodeForm";
@@ -146,7 +146,22 @@ export default async function AdminPage() {
                 {memberDateFmt.format(m.createdAt)}
               </span>
               {m.id !== user.id && (
-                <DeleteUserButton userId={m.id} name={m.name} />
+                <>
+                  <form action={toggleAdminAction}>
+                    <input type="hidden" name="userId" value={m.id} />
+                    <button
+                      type="submit"
+                      className={`rounded-lg border px-2.5 py-1 text-xs font-semibold transition ${
+                        m.isAdmin
+                          ? "border-white/15 bg-white/5 text-slate-300 hover:bg-white/10"
+                          : "border-amber-400/40 bg-amber-400/15 text-amber-200 hover:bg-amber-400/25"
+                      }`}
+                    >
+                      {m.isAdmin ? "Retirer admin" : "Rendre admin"}
+                    </button>
+                  </form>
+                  <DeleteUserButton userId={m.id} name={m.name} />
+                </>
               )}
             </li>
           ))}
