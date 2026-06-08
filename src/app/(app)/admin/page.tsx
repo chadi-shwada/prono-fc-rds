@@ -10,6 +10,7 @@ import CreateCodeForm from "@/components/CreateCodeForm";
 import ResetPronosButton from "@/components/ResetPronosButton";
 import TestNotificationButton from "@/components/TestNotificationButton";
 import BroadcastForm from "@/components/BroadcastForm";
+import DeleteUserButton from "@/components/DeleteUserButton";
 import { isPushConfigured } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
@@ -144,6 +145,9 @@ export default async function AdminPage() {
               <span className="w-16 text-right text-xs text-slate-600">
                 {memberDateFmt.format(m.createdAt)}
               </span>
+              {m.id !== user.id && (
+                <DeleteUserButton userId={m.id} name={m.name} />
+              )}
             </li>
           ))}
         </ul>

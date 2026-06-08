@@ -129,6 +129,15 @@ export async function resetMatchPredictionsAction(
   revalidatePath("/classement");
 }
 
+/** Supprime un utilisateur et toutes ses données (pronos, sessions…). */
+export async function deleteUserAction(userId: string): Promise<void> {
+  const me = await requireAdmin();
+  if (!userId || userId === me.id) return; // jamais soi-même
+  await prisma.user.delete({ where: { id: userId } }).catch(() => {});
+  revalidatePath("/admin");
+  revalidatePath("/classement");
+}
+
 /** Active / désactive un code d'invitation. */
 export async function toggleCodeActiveAction(formData: FormData): Promise<void> {
   await requireAdmin();
