@@ -19,6 +19,8 @@ export default function ChampionForm({
     undefined,
   );
   const [selected, setSelected] = useState(initialTeamId ?? "");
+  // `initialTeamId` reflète le champion sauvegardé (mis à jour après revalidation).
+  const isSaved = selected !== "" && selected === initialTeamId;
 
   useEffect(() => {
     if (!state?.ok) return;
@@ -44,11 +46,21 @@ export default function ChampionForm({
       <ChampionSelect teams={teams} value={selected} onChange={setSelected} />
       <motion.button
         type="submit"
-        disabled={pending || !selected}
+        disabled={pending || !selected || isSaved}
         whileTap={{ scale: 0.96 }}
-        className="rounded-xl bg-amber-400 px-5 py-2.5 text-sm font-semibold text-amber-950 transition hover:bg-amber-300 disabled:opacity-50"
+        className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition ${
+          isSaved
+            ? "bg-emerald-500/20 text-emerald-300"
+            : "bg-amber-400 text-amber-950 hover:bg-amber-300 disabled:opacity-50"
+        }`}
       >
-        {pending ? "…" : state?.ok ? "✓ Enregistré" : "Valider"}
+        {pending
+          ? "…"
+          : isSaved
+            ? "✓ Champion enregistré"
+            : initialTeamId
+              ? "Modifier"
+              : "Valider"}
       </motion.button>
       {state?.error && <p className="w-full text-sm text-red-300">{state.error}</p>}
     </form>
