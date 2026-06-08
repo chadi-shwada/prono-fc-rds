@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Sora } from "next/font/google";
+import { appName, appTagline } from "@/lib/features";
 import "./globals.css";
 
-const siteUrl =
+const buildSiteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ??
   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
@@ -22,19 +23,19 @@ const sora = Sora({
   weight: ["600", "700", "800"],
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: "Prono FC RDS — Coupe du Monde 2026",
-  description: "Pronostics de la Coupe du Monde 2026 entre collègues RATP",
-  applicationName: "Prono FC RDS",
-  appleWebApp: { capable: true, title: "Prono FC RDS", statusBarStyle: "black-translucent" },
-  openGraph: {
-    title: "Prono FC RDS — Coupe du Monde 2026",
-    description: "Pronostics de la Coupe du Monde 2026 entre collègues RATP",
-    type: "website",
-    locale: "fr_FR",
-  },
-};
+export function generateMetadata(): Metadata {
+  const name = appName();
+  const title = `${name} — Coupe du Monde 2026`;
+  const description = `Pronostics de la Coupe du Monde 2026 ${appTagline()}`;
+  return {
+    metadataBase: new URL(process.env.APP_URL || buildSiteUrl),
+    title,
+    description,
+    applicationName: name,
+    appleWebApp: { capable: true, title: name, statusBarStyle: "black-translucent" },
+    openGraph: { title, description, type: "website", locale: "fr_FR" },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#10b981",

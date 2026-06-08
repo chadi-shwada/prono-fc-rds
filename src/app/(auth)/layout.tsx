@@ -3,6 +3,7 @@ import Reveal from "@/components/Reveal";
 import Countdown from "@/components/Countdown";
 import FlagsMarquee from "@/components/FlagsMarquee";
 import Logo from "@/components/Logo";
+import { appName, appTagline } from "@/lib/features";
 
 export default async function AuthLayout({
   children,
@@ -24,10 +25,10 @@ export default async function AuthLayout({
               <Logo size={76} className="rounded-[18px]" />
             </div>
             <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight text-white">
-              Prono FC <span className="text-gradient">RDS</span>
+              <span className="text-gradient">{appName()}</span>
             </h1>
             <p className="mt-2 text-sm text-slate-400">
-              Pronos de la Coupe du Monde 2026 · entre collègues RATP ⚽
+              Pronos de la Coupe du Monde 2026 · {appTagline()} ⚽
             </p>
           </div>
         </Reveal>

@@ -12,6 +12,7 @@ import FeatureCard from "@/components/landing/FeatureCard";
 import LandingPreview from "@/components/landing/LandingPreview";
 import LandingConfetti from "@/components/landing/LandingConfetti";
 import WorkPcNotice from "@/components/landing/WorkPcNotice";
+import { appName, appTagline } from "@/lib/features";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,7 @@ export default async function Landing() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-2 font-display font-extrabold text-white">
             <Logo size={28} />
-            <span>Prono FC RDS</span>
+            <span>{appName()}</span>
           </div>
           <Link
             href="/login"
@@ -53,7 +54,7 @@ export default async function Landing() {
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-16 sm:px-6">
         {/* Affiché uniquement si le JS est bloqué (réseau entreprise) */}
         <div className="pt-4">
-          <WorkPcNotice />
+          <WorkPcNotice appName={appName()} />
         </div>
 
         {/* Hero (serveur + CSS) */}
@@ -156,7 +157,7 @@ export default async function Landing() {
       </main>
 
       <footer className="border-t border-white/10 px-4 py-5 text-center text-xs text-slate-400">
-        Prono FC RDS · Coupe du Monde 2026 · entre collègues RATP
+        {appName()} · Coupe du Monde 2026 · {appTagline()}
       </footer>
     </div>
   );

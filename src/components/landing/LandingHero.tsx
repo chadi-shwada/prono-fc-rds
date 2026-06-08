@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import { appName, appTagline } from "@/lib/features";
 
 // Rendu serveur + animations CSS : reste visible même si le JavaScript est
 // bloqué par le réseau (les anims jouent en CSS, sans dépendre du JS).
@@ -10,7 +11,7 @@ export default function LandingHero() {
         className="rise-in inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-slate-300"
         style={{ animationDelay: "0.02s" }}
       >
-        ⚽ Coupe du Monde 2026 · entre collègues RATP
+        ⚽ Coupe du Monde 2026 · {appTagline()}
       </span>
 
       <div className="rise-in" style={{ animationDelay: "0.08s" }}>
@@ -23,7 +24,7 @@ export default function LandingHero() {
         className="rise-in font-display text-5xl font-extrabold leading-[1.05] sm:text-7xl"
         style={{ animationDelay: "0.16s" }}
       >
-        Prono FC <span className="text-gradient">RDS</span>
+        <span className="text-gradient">{appName()}</span>
       </h1>
 
       <p

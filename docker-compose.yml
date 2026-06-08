@@ -14,6 +14,8 @@ services:
       CRON_SECRET: ${CRON_SECRET}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
       APP_URL: ${NEXT_PUBLIC_SITE_URL}
+      APP_NAME: ${APP_NAME:-Prono FC RDS}
+      APP_TAGLINE: ${APP_TAGLINE:-entre collègues RATP}
       SEED_ADMIN_NAME: ${SEED_ADMIN_NAME}
       SEED_INVITE_CODE: ${SEED_INVITE_CODE}
       # Notifications push (Web Push) — générer avec: npx web-push generate-vapid-keys
@@ -74,6 +76,8 @@ services:
       CRON_SECRET: ${DISCORD_CRON_SECRET}
       NEXT_PUBLIC_SITE_URL: ${DISCORD_SITE_URL}
       APP_URL: ${DISCORD_SITE_URL}
+      APP_NAME: ${DISCORD_APP_NAME:-Pronos}
+      APP_TAGLINE: ${DISCORD_APP_TAGLINE:-entre potes}
       SEED_ADMIN_NAME: ${DISCORD_SEED_ADMIN_NAME}
       SEED_INVITE_CODE: ${DISCORD_SEED_INVITE_CODE}
       VAPID_PUBLIC_KEY: ${DISCORD_VAPID_PUBLIC_KEY:-}

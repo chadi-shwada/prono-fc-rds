@@ -1,10 +1,13 @@
 import type { MetadataRoute } from "next";
+import { appName, appTagline } from "@/lib/features";
+
+export const dynamic = "force-dynamic";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Prono FC RDS — Coupe du Monde 2026",
-    short_name: "Prono FC RDS",
-    description: "Pronostics de la Coupe du Monde 2026 entre collègues RATP",
+    name: `${appName()} — Coupe du Monde 2026`,
+    short_name: appName(),
+    description: `Pronostics de la Coupe du Monde 2026 ${appTagline()}`,
     lang: "fr",
     start_url: "/dashboard",
     display: "standalone",

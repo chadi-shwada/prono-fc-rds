@@ -5,7 +5,7 @@ import NavBar from "@/components/NavBar";
 import BottomNav from "@/components/BottomNav";
 import Particles from "@/components/Particles";
 import SenegalEasterEgg from "@/components/SenegalEasterEgg";
-import { isEasterEggEnabled } from "@/lib/features";
+import { isEasterEggEnabled, appName, appTagline } from "@/lib/features";
 
 export default async function AppLayout({
   children,
@@ -28,10 +28,10 @@ export default async function AppLayout({
           Règles du jeu
         </Link>
         <span className="mx-2">·</span>
-        <span className="whitespace-nowrap">Prono FC RDS</span>
+        <span className="whitespace-nowrap">{appName()}</span>
         <span className="mx-2 hidden sm:inline">·</span>
         <span className="mt-1 block sm:mt-0 sm:inline">
-          Coupe du Monde 2026 · entre collègues RATP
+          Coupe du Monde 2026 · {appTagline()}
         </span>
       </footer>
       <BottomNav />

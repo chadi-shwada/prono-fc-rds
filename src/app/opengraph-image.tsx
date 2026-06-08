@@ -1,6 +1,9 @@
 import { ImageResponse } from "next/og";
+import { appName, appTagline } from "@/lib/features";
 
-export const alt = "Prono FC RDS — Pronos de la Coupe du Monde 2026";
+// Dynamique pour refléter le branding propre à chaque instance (runtime).
+export const dynamic = "force-dynamic";
+export const alt = "Pronos de la Coupe du Monde 2026";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -66,9 +69,16 @@ export default function Image() {
         </div>
 
         {/* Marque */}
-        <div style={{ display: "flex", fontSize: 86, fontWeight: 800, letterSpacing: -3 }}>
-          <span>Prono FC </span>
-          <span style={{ color: "#5eead4", marginLeft: 18 }}>RDS</span>
+        <div
+          style={{
+            display: "flex",
+            fontSize: 86,
+            fontWeight: 800,
+            letterSpacing: -3,
+            color: "#ffffff",
+          }}
+        >
+          {appName()}
         </div>
 
         {/* Accroche */}
@@ -76,7 +86,7 @@ export default function Image() {
           Pronos de la Coupe du Monde 2026 ⚽
         </div>
         <div style={{ display: "flex", fontSize: 28, color: "#94a3b8" }}>
-          entre collègues RATP · accès sur invitation 🔒
+          {appTagline()} · accès sur invitation 🔒
         </div>
 
         {/* Pays hôtes */}

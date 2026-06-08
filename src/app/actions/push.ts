@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { isPushConfigured, sendTestNotification, broadcastToAll } from "@/lib/push";
 import { isDiscordWebhookEnabled, postToDiscord } from "@/lib/discord";
+import { appName } from "@/lib/features";
 
 type SubInput = {
   endpoint: string;
@@ -68,7 +69,7 @@ export async function broadcastNotificationAction(
   if (!body) return { ok: false, devices: 0, error: "Message vide." };
 
   const devices = await broadcastToAll({
-    title: "Prono FC RDS 📣",
+    title: `${appName()} 📣`,
     body,
     url: "/dashboard",
   });
