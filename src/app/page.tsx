@@ -46,19 +46,28 @@ export default async function Landing() {
 
       {/* Barre publique */}
       <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/70 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
+        <div className="relative mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-2 font-display font-extrabold text-white">
             <Logo size={28} />
             <span>{appName()}</span>
           </div>
-          <nav className="hidden items-center gap-6 text-sm font-medium text-slate-300 sm:flex">
-            <a href="#comment" className="transition hover:text-white">
+          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1.5 text-sm font-medium text-slate-300 backdrop-blur sm:flex">
+            <a
+              href="#comment"
+              className="rounded-full px-3.5 py-1.5 transition hover:bg-white/10 hover:text-white"
+            >
               Comment jouer
             </a>
-            <a href="#apercu" className="transition hover:text-white">
+            <a
+              href="#apercu"
+              className="rounded-full px-3.5 py-1.5 transition hover:bg-white/10 hover:text-white"
+            >
               Aperçu
             </a>
-            <a href="#bareme" className="transition hover:text-white">
+            <a
+              href="#bareme"
+              className="rounded-full px-3.5 py-1.5 transition hover:bg-white/10 hover:text-white"
+            >
               Barème
             </a>
           </nav>
