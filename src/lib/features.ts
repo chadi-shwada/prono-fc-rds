@@ -16,3 +16,11 @@ export function appName(): string {
 export function appTagline(): string {
   return process.env.APP_TAGLINE || "entre collègues RATP";
 }
+
+/** Noms d'exemple affichés dans l'aperçu de la landing (PREVIEW_NAMES="a,b,c"). */
+export function previewNames(): [string, string, string] {
+  const parts = (process.env.PREVIEW_NAMES || "Chadi,Moussa,Xavier")
+    .split(",")
+    .map((s) => s.trim());
+  return [parts[0] || "Chadi", parts[1] || "Moussa", parts[2] || "Xavier"];
+}

@@ -1,15 +1,16 @@
 import Flag from "@/components/Flag";
 import Avatar from "@/components/Avatar";
-
-const RANKING = [
-  { name: "Chadi", pts: 48, medal: "🥇", width: "100%" },
-  { name: "Moussa", pts: 41, medal: "🥈", width: "85%" },
-  { name: "Xavier", pts: 37, medal: "🥉", width: "77%" },
-];
+import { previewNames } from "@/lib/features";
 
 // Aperçu « produit » — rendu serveur + CSS (visible sans JS). rise-in sur les
 // wrappers, inclinaison/redressement au survol en CSS sur la carte interne.
 export default function LandingPreview() {
+  const [n1, n2, n3] = previewNames();
+  const RANKING = [
+    { name: n1, pts: 48, medal: "🥇", width: "100%" },
+    { name: n2, pts: 41, medal: "🥈", width: "85%" },
+    { name: n3, pts: 37, medal: "🥉", width: "77%" },
+  ];
   return (
     <div className="grid items-center gap-5 sm:grid-cols-2">
       {/* Carte de prono */}
