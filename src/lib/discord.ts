@@ -8,7 +8,13 @@ const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 
 export function siteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  // APP_URL est lu au RUNTIME (contrairement à NEXT_PUBLIC_*, figé au build) →
+  // indispensable pour l'URL de redirection OAuth, propre à chaque instance.
+  return (
+    process.env.APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "http://localhost:3000"
+  );
 }
 
 /** Annonces dans un salon Discord activées sur cette instance ? */
