@@ -19,6 +19,7 @@ model User {
   passwordHash String? // plus utilisé (connexion par pseudo + code)
   isAdmin      Boolean  @default(false)
   foundEasterEgg Boolean @default(false) // a réveillé le lion 🦁 (bonus de points)
+  discordId    String?  @unique // si connecté via Discord (instance Discord)
   createdAt    DateTime @default(now())
 
   sessions            Session[]
