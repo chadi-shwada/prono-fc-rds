@@ -43,4 +43,5 @@ export const SCORING = {
   RESULT: 1, // bon résultat seul (vainqueur/nul)
   KNOCKOUT_MULTIPLIER: 2, // phases finales : points ×2
   CHAMPION_BONUS: 10, // bonus si on a prédit le vainqueur final
+  EASTER_EGG: 5, // bonus secret : avoir réveillé le lion 🦁
 } as const;

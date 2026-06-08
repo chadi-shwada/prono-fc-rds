@@ -78,12 +78,20 @@ export async function recomputeChampionBonus(): Promise<void> {
 
 /** Total des points d'un utilisateur (matchs + bonus vainqueur). */
 export async function userTotalPoints(userId: string): Promise<number> {
-  const [matchAgg, champ] = await Promise.all([
+  const [matchAgg, champ, user] = await Promise.all([
     prisma.prediction.aggregate({
       where: { userId },
       _sum: { points: true },
     }),
     prisma.championPrediction.findUnique({ where: { userId } }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { foundEasterEgg: true },
+    }),
   ]);
-  return (matchAgg._sum.points ?? 0) + (champ?.points ?? 0);
+  return (
+    (matchAgg._sum.points ?? 0) +
+    (champ?.points ?? 0) +
+    (user?.foundEasterEgg ? SCORING.EASTER_EGG : 0)
+  );
 }

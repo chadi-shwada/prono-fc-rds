@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { MATCH_STATUS } from "@/lib/constants";
+import { MATCH_STATUS, SCORING } from "@/lib/constants";
 
 export type LeaderboardRow = {
   userId: string;
@@ -12,7 +12,9 @@ export type LeaderboardRow = {
 /** Classement trié : points desc, puis scores exacts desc, puis pseudo. */
 export async function getLeaderboard(): Promise<LeaderboardRow[]> {
   const [users, predAgg, champs, exactPreds] = await Promise.all([
-    prisma.user.findMany({ select: { id: true, name: true } }),
+    prisma.user.findMany({
+      select: { id: true, name: true, foundEasterEgg: true },
+    }),
     prisma.prediction.groupBy({
       by: ["userId"],
       _sum: { points: true },
@@ -50,7 +52,10 @@ export async function getLeaderboard(): Promise<LeaderboardRow[]> {
     return {
       userId: u.id,
       name: u.name,
-      points: (agg?._sum.points ?? 0) + (champByUser.get(u.id) ?? 0),
+      points:
+        (agg?._sum.points ?? 0) +
+        (champByUser.get(u.id) ?? 0) +
+        (u.foundEasterEgg ? SCORING.EASTER_EGG : 0),
       predictions: agg?._count._all ?? 0,
       exactScores: exactByUser.get(u.id) ?? 0,
     };

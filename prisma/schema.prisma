@@ -18,6 +18,7 @@ model User {
   name         String   @unique // pseudo affiché
   passwordHash String? // plus utilisé (connexion par pseudo + code)
   isAdmin      Boolean  @default(false)
+  foundEasterEgg Boolean @default(false) // a réveillé le lion 🦁 (bonus de points)
   createdAt    DateTime @default(now())
 
   sessions            Session[]
