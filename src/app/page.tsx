@@ -42,7 +42,7 @@ export default async function Landing() {
       {/* Ambiance : ballons/coupes qui flottent (l'aurore est dans le layout racine) */}
       <Particles />
       {/* Intro « coup d'envoi » — instance Discord uniquement */}
-      {discordLogin && <LandingOpening name={appName()} />}
+      {discordLogin && <LandingOpening name={appName()} codes={codes} />}
 
       {/* Barre publique */}
       <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/70 backdrop-blur">

@@ -156,6 +156,14 @@ body {
   to { transform: translateX(-50%); }
 }
 
+/* Variante zig-zag : les drapeaux alternent haut/bas (décor de l'intro) */
+.flags-zigzag > * {
+  transform: translateY(-12px);
+}
+.flags-zigzag > *:nth-child(even) {
+  transform: translateY(12px);
+}
+
 /* Apparition au chargement, en pur CSS → s'affiche même si le JS est bloqué
    (réseau d'entreprise qui filtre /_next/static). */
 .rise-in {

@@ -2,14 +2,29 @@
 
 import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
+import FlagsMarquee from "@/components/FlagsMarquee";
+
+// Repli si la base n'a pas encore d'équipes synchronisées : un échantillon de
+// nations pour que le bandeau ne soit jamais vide à l'ouverture.
+const FALLBACK_CODES = [
+  "FRA", "BRA", "ARG", "GER", "ESP", "POR", "ENG", "NED", "ITA", "BEL",
+  "USA", "MEX", "CAN", "CRO", "MAR", "JPN", "SEN", "URU",
+];
 
 // Intro « coup d'envoi » de la landing (instance Discord uniquement) : ambiance
 // Coupe du Monde — pelouse + projecteurs de stade, ballon qui arrive en tournant,
 // titre « Coupe du Monde 2026 » en or (couleur du trophée FIFA) + trophées, puis
 // fondu avec un double burst de confettis. Joué une fois par session, désactivé
 // si l'utilisateur préfère moins d'animations.
-export default function LandingOpening({ name }: { name: string }) {
+export default function LandingOpening({
+  name,
+  codes,
+}: {
+  name: string;
+  codes: string[];
+}) {
   const [phase, setPhase] = useState<"hidden" | "in" | "out">("hidden");
+  const flagCodes = codes.length >= 6 ? codes : FALLBACK_CODES;
 
   useEffect(() => {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
@@ -80,6 +95,11 @@ export default function LandingOpening({ name }: { name: string }) {
           </span>
         </h2>
         <p className="mt-3 text-sm text-slate-300">{name}</p>
+      </div>
+
+      {/* Bandeau de drapeaux en zig-zag, en bas */}
+      <div className="opening-rise absolute inset-x-0 bottom-6 z-10">
+        <FlagsMarquee codes={flagCodes} zigzag />
       </div>
     </div>
   );
