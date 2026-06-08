@@ -1,4 +1,5 @@
 services:
+  # ===================== Instance RATP (par défaut) =====================
   app:
     image: ghcr.io/chadi-shwada/prono-fc-rds:latest
     restart: unless-stopped
@@ -18,10 +19,6 @@ services:
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
       VAPID_SUBJECT: ${VAPID_SUBJECT}
-      # Instance Discord uniquement (vides = désactivé → instance RATP inchangée)
-      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
-      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
-      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
     volumes:
       - app-data:/data
     expose:
@@ -37,14 +34,13 @@ services:
       DOMAIN: ${DOMAIN}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Sites additionnels (ex. instance Discord) déposés ici (vide = ignoré).
+      - ./caddy-conf.d:/etc/caddy/conf.d:ro
       - caddy-data:/data
       - caddy-config:/config
     depends_on:
       - app
 
-  # Synchro automatique des résultats (scores en direct + points).
-  # Intervalle court pendant le tournoi (défaut 120 s) pour un vrai « direct ».
-  # Réglable via SYNC_INTERVAL_SECONDS dans le .env (ex. 600 hors tournoi).
   cron:
     image: alpine:3
     restart: unless-stopped
@@ -60,7 +56,54 @@ services:
     depends_on:
       - app
 
+  # ============ Instance DISCORD (optionnelle, même VPS) ============
+  # Ne démarre QUE si le profil « discord » est actif
+  # (mets COMPOSE_PROFILES=discord dans le .env). Sans ça, l'instance RATP
+  # ci-dessus tourne seule, inchangée.
+  app-discord:
+    image: ghcr.io/chadi-shwada/prono-fc-rds:latest
+    restart: unless-stopped
+    profiles: ["discord"]
+    environment:
+      NODE_ENV: production
+      TZ: Europe/Paris
+      DATABASE_URL: "file:/data/prod.db"
+      APP_SECRET: ${DISCORD_APP_SECRET}
+      FOOTBALL_API_KEY: ${FOOTBALL_API_KEY}
+      CRON_SECRET: ${DISCORD_CRON_SECRET}
+      NEXT_PUBLIC_SITE_URL: ${DISCORD_SITE_URL}
+      SEED_ADMIN_NAME: ${DISCORD_SEED_ADMIN_NAME}
+      SEED_INVITE_CODE: ${DISCORD_SEED_INVITE_CODE}
+      VAPID_PUBLIC_KEY: ${DISCORD_VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${DISCORD_VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${DISCORD_VAPID_SUBJECT:-}
+      # Connexion + annonces Discord
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+    volumes:
+      - discord-data:/data
+    expose:
+      - "3000"
+
+  cron-discord:
+    image: alpine:3
+    restart: unless-stopped
+    profiles: ["discord"]
+    environment:
+      CRON_SECRET: ${DISCORD_CRON_SECRET}
+      SYNC_INTERVAL_SECONDS: ${SYNC_INTERVAL_SECONDS:-120}
+    command: >
+      sh -c "apk add --no-cache curl >/dev/null 2>&1;
+      while true; do
+        curl -s -H \"Authorization: Bearer $${CRON_SECRET}\" http://app-discord:3000/api/cron/sync >/dev/null 2>&1 || true;
+        sleep \"$${SYNC_INTERVAL_SECONDS:-120}\";
+      done"
+    depends_on:
+      - app-discord
+
 volumes:
   app-data:
+  discord-data:
   caddy-data:
   caddy-config:

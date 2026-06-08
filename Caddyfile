@@ -6,3 +6,7 @@
 	encode gzip
 	reverse_proxy app:3000
 }
+
+# Sites additionnels (ex. instance Discord). Le glob n'échoue pas s'il n'y a
+# aucun fichier — l'instance RATP fonctionne seule par défaut.
+import /etc/caddy/conf.d/*.caddy

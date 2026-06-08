@@ -1,0 +1,9 @@
+# Instance Discord sur le MÊME VPS.
+# Copie ce fichier en « discord.caddy » (dans ce dossier caddy-conf.d) et
+# remplace le domaine ci-dessous par ton (sous-)domaine Discord.
+# Puis recharge : docker compose restart caddy
+
+discord.tondomaine.fr {
+	encode gzip
+	reverse_proxy app-discord:3000
+}

@@ -63,6 +63,7 @@ jobs:
         run: |
           rsync -az --delete \
             --exclude='.git' --exclude='node_modules' --exclude='.next' --exclude='.env' \
+            --exclude='caddy-conf.d/*.caddy' \
             -e "ssh -4 -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=20 -o ServerAliveInterval=15" \
             ./ "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/prono/"
 
