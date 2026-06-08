@@ -37,7 +37,7 @@ Intégrations → Webhooks → Nouveau webhook → Copier l'URL**.
    DISCORD_SITE_URL=https://discord.tondomaine.fr
    DISCORD_APP_SECRET=...            # openssl rand -hex 32
    DISCORD_CRON_SECRET=...           # openssl rand -hex 32
-   DISCORD_SEED_ADMIN_NAME=ton_pseudo
+   DISCORD_ADMIN_ID=ton_id_discord   # clic droit sur ton profil → Copier l'identifiant
    DISCORD_SEED_INVITE_CODE=DISCORD2026
    DISCORD_CLIENT_ID=...
    DISCORD_CLIENT_SECRET=...
@@ -69,6 +69,9 @@ connecter avec Discord »**, et les résultats / rappels sont postés dans le sa
 - **Ressources** : ça fait tourner 2 apps Next sur le VPS. Sur une petite
   machine, garde un peu de **swap** (cf. le souci RAM qu'on a réglé).
 - Chaque instance synchronise les matchs indépendamment (mêmes données CDM 2026).
-- L'admin Discord est créé via `DISCORD_SEED_ADMIN_NAME` + `DISCORD_SEED_INVITE_CODE`
-  (connecte-toi une fois en pseudo+code pour être admin ; ton compte se lie à ton
-  Discord au 1ᵉʳ login Discord).
+- **Admin Discord** : renseigne `DISCORD_ADMIN_ID` (ton **ID utilisateur Discord**,
+  numérique — active le *Mode développeur* dans Discord puis *clic droit sur ton
+  profil → Copier l'identifiant*). Au login Discord, **ton** compte est promu admin
+  automatiquement. Tant que `DISCORD_ADMIN_ID` est renseigné, aucun compte admin
+  « par nom » n'est créé au démarrage — ça évite le compte fantôme (sans `discordId`,
+  inconnectable via Discord) qui réapparaissait à chaque redémarrage du conteneur.

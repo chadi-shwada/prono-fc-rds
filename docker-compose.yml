@@ -91,6 +91,8 @@ services:
       DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
       DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+      # ID Discord de l'admin (promu automatiquement à la connexion)
+      DISCORD_ADMIN_ID: ${DISCORD_ADMIN_ID:-}
       # Pas d'easter egg sur l'instance Discord
       EASTER_EGG_DISABLED: "1"
     volumes:

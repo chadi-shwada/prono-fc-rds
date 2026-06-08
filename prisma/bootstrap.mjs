@@ -14,6 +14,20 @@ async function main() {
     create: { code, label },
   });
 
+  // Sur l'instance Discord (login OAuth), on NE crée PAS de compte admin par nom :
+  // il serait « fantôme » (sans discordId → impossible de s'y connecter via
+  // Discord) et serait recréé à chaque démarrage du conteneur. L'admin y est
+  // promu à la connexion via DISCORD_ADMIN_ID (voir le callback OAuth).
+  const discordAdminId = process.env.DISCORD_ADMIN_ID?.trim();
+  const isDiscordOAuth = !!process.env.DISCORD_CLIENT_ID && !!discordAdminId;
+
+  if (isDiscordOAuth) {
+    console.log(
+      `✓ Bootstrap : instance Discord — admin promu via DISCORD_ADMIN_ID au login. Code d'invitation « ${code} ».`,
+    );
+    return;
+  }
+
   const adminName = process.env.SEED_ADMIN_NAME ?? "chadi";
   await prisma.user.upsert({
     where: { name: adminName },

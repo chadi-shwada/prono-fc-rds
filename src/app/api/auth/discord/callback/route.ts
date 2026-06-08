@@ -36,10 +36,25 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${siteUrl()}/login?error=discord`);
   }
 
+  // L'admin de l'instance Discord est désigné par son ID Discord (stable, ne
+  // dépend pas du pseudo). Sur une instance 100 % OAuth, c'est le seul moyen
+  // fiable de se promouvoir admin (pas de compte « pseudo + code »).
+  const adminId = process.env.DISCORD_ADMIN_ID?.trim();
+  const shouldBeAdmin = !!adminId && du.id === adminId;
+
   let user = await prisma.user.findUnique({ where: { discordId: du.id } });
   if (!user) {
     user = await prisma.user.create({
-      data: { discordId: du.id, name: await uniqueName(du.name) },
+      data: {
+        discordId: du.id,
+        name: await uniqueName(du.name),
+        isAdmin: shouldBeAdmin,
+      },
+    });
+  } else if (shouldBeAdmin && !user.isAdmin) {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { isAdmin: true },
     });
   }
 
