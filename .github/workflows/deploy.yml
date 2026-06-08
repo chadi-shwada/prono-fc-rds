@@ -53,17 +53,21 @@ jobs:
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-      # ssh -4 : les runners GitHub sont IPv4-only. ConnectTimeout : échec rapide.
-      # On envoie seulement la config (docker-compose.yml, Caddyfile…) — pas de build.
-      - name: Envoyer la config (rsync)
+      # L'image est sur GHCR : le déploiement réel est fait par le VPS lui-même
+      # (cron qui « docker compose pull »), car la connexion entrante GitHub → VPS
+      # est régulièrement bloquée par le réseau de l'hébergeur.
+      # Ces 2 étapes ne sont donc qu'un « coup de pouce » pour déployer tout de
+      # suite quand le VPS est joignable — elles ne FONT PAS échouer le workflow.
+      - name: Envoyer la config (rsync, best-effort)
+        continue-on-error: true
         run: |
           rsync -az --delete \
             --exclude='.git' --exclude='node_modules' --exclude='.next' --exclude='.env' \
             -e "ssh -4 -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=20 -o ServerAliveInterval=15" \
             ./ "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/prono/"
 
-      # Le VPS se connecte à GHCR (token du run), tire l'image et redémarre.
-      - name: Déployer (pull image + up)
+      - name: Déployer maintenant si joignable (best-effort)
+        continue-on-error: true
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
