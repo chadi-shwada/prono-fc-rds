@@ -15,6 +15,7 @@ export type BadgeInput = {
   bestStreak: number; // meilleure série de bons pronos d'affilée
   rank: number; // position au classement général
   isPlayerOfDay: boolean;
+  foundEasterEgg: boolean; // a réveillé le lion 🦁
 };
 
 /** Liste des badges débloqués, du plus prestigieux au plus commun. */
@@ -35,6 +36,14 @@ export function computeBadges(s: BadgeInput): Badge[] {
       emoji: "🥇",
       label: "Leader",
       desc: "1er au classement général",
+    });
+  }
+  if (s.foundEasterEgg) {
+    out.push({
+      key: "lion",
+      emoji: "🦁",
+      label: "Dompteur de lion",
+      desc: "A réveillé le lion 🦁 (+5 pts)",
     });
   }
   if (s.exact >= 5) {

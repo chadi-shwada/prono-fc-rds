@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 export default async function ProfilPage() {
   const user = (await getCurrentUser())!;
 
-  const [points, leaderboard, predictions, champion, playerOfDay] =
+  const [points, leaderboard, predictions, champion, playerOfDay, me] =
     await Promise.all([
       userTotalPoints(user.id),
       getLeaderboard(),
@@ -31,6 +31,10 @@ export default async function ProfilPage() {
         include: { team: true },
       }),
       getPlayerOfTheDay(),
+      prisma.user.findUnique({
+        where: { id: user.id },
+        select: { foundEasterEgg: true },
+      }),
     ]);
 
   const rank = leaderboard.findIndex((r) => r.userId === user.id) + 1;
@@ -82,6 +86,7 @@ export default async function ProfilPage() {
     bestStreak: bestStreak(orderedCorrect),
     rank,
     isPlayerOfDay: playerOfDay?.userId === user.id,
+    foundEasterEgg: me?.foundEasterEgg ?? false,
   });
 
   return (
