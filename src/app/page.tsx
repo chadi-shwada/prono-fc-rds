@@ -51,6 +51,17 @@ export default async function Landing() {
             <Logo size={28} />
             <span>{appName()}</span>
           </div>
+          <nav className="hidden items-center gap-6 text-sm font-medium text-slate-300 sm:flex">
+            <a href="#comment" className="transition hover:text-white">
+              Comment jouer
+            </a>
+            <a href="#apercu" className="transition hover:text-white">
+              Aperçu
+            </a>
+            <a href="#bareme" className="transition hover:text-white">
+              Barème
+            </a>
+          </nav>
           <Link
             href="/login"
             className="rounded-lg border border-white/10 bg-white/5 px-4 py-1.5 text-sm font-semibold text-slate-200 transition hover:bg-white/10"
@@ -122,7 +133,7 @@ export default async function Landing() {
         )}
 
         {/* Comment ça marche */}
-        <section className="mt-16">
+        <section id="comment" className="mt-16 scroll-mt-24">
           <h2 className="rise-in text-center font-display text-3xl font-extrabold">
             Comment ça marche
           </h2>
@@ -149,7 +160,7 @@ export default async function Landing() {
         </section>
 
         {/* Aperçu de l'app */}
-        <section className="mt-16">
+        <section id="apercu" className="mt-16 scroll-mt-24">
           <div className="rise-in">
             <h2 className="text-center font-display text-3xl font-extrabold">
               Un avant-goût
@@ -164,7 +175,7 @@ export default async function Landing() {
         </section>
 
         {/* Barème */}
-        <section className="mt-16">
+        <section id="bareme" className="mt-16 scroll-mt-24">
           <h2 className="rise-in text-center font-display text-3xl font-extrabold">
             Le barème, en un clin d&apos;œil
           </h2>

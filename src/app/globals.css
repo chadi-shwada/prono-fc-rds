@@ -13,6 +13,16 @@ body {
   background: #060a13;
 }
 
+/* Défilement fluide pour les ancres de la landing (barre du haut) */
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 /* ---------- Fond animé : aurores dégradées ---------- */
 .aurora {
   position: fixed;
