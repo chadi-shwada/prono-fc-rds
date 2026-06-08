@@ -13,6 +13,7 @@ import LandingPreview from "@/components/landing/LandingPreview";
 import LandingConfetti from "@/components/landing/LandingConfetti";
 import WorkPcNotice from "@/components/landing/WorkPcNotice";
 import { appName, appTagline } from "@/lib/features";
+import { isDiscordEnabled } from "@/lib/discord";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,7 @@ export default async function Landing() {
     prisma.team.findMany({ select: { code: true }, orderBy: { name: "asc" } }),
   ]);
   const codes = teams.map((t) => t.code);
+  const discordLogin = isDiscordEnabled();
 
   return (
     <div className="relative flex min-h-screen flex-col">
@@ -143,8 +145,9 @@ export default async function Landing() {
               Prêt à entrer sur le terrain ?
             </h2>
             <p className="mx-auto mt-2 max-w-md text-slate-300">
-              Connecte-toi avec ton pseudo et le code d&apos;invitation partagé par
-              l&apos;organisateur. Ton compte se crée tout seul.
+              {discordLogin
+                ? "Connecte-toi en un clic avec ton compte Discord — c'est parti !"
+                : "Connecte-toi avec ton pseudo et le code d'invitation partagé par l'organisateur. Ton compte se crée tout seul."}
             </p>
             <Link
               href="/login"
