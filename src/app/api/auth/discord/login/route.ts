@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { randomBytes } from "node:crypto";
-import { isDiscordEnabled, discordAuthorizeUrl } from "@/lib/discord";
+import { isDiscordEnabled, discordAuthorizeUrl, siteUrl } from "@/lib/discord";
 
 export const dynamic = "force-dynamic";
 
 // Démarre la connexion Discord : pose un state anti-CSRF et redirige vers Discord.
-export async function GET(request: Request) {
+export async function GET() {
   if (!isDiscordEnabled()) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(`${siteUrl()}/login`);
   }
   const state = randomBytes(16).toString("hex");
   const store = await cookies();

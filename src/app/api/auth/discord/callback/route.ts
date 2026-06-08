@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
-import { exchangeDiscordCode } from "@/lib/discord";
+import { exchangeDiscordCode, siteUrl } from "@/lib/discord";
 
 export const dynamic = "force-dynamic";
 
@@ -28,12 +28,12 @@ export async function GET(request: Request) {
   store.delete("discord_oauth_state");
 
   if (!code || !state || !saved || state !== saved) {
-    return NextResponse.redirect(new URL("/login?error=discord", request.url));
+    return NextResponse.redirect(`${siteUrl()}/login?error=discord`);
   }
 
   const du = await exchangeDiscordCode(code);
   if (!du) {
-    return NextResponse.redirect(new URL("/login?error=discord", request.url));
+    return NextResponse.redirect(`${siteUrl()}/login?error=discord`);
   }
 
   let user = await prisma.user.findUnique({ where: { discordId: du.id } });
@@ -44,5 +44,5 @@ export async function GET(request: Request) {
   }
 
   await createSession(user.id);
-  return NextResponse.redirect(new URL("/dashboard", request.url));
+  return NextResponse.redirect(`${siteUrl()}/dashboard`);
 }
