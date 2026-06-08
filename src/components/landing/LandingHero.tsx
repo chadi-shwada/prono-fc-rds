@@ -37,7 +37,7 @@ export default function LandingHero() {
       </p>
 
       <div
-        className="rise-in flex flex-col items-center gap-3 sm:flex-row"
+        className="rise-in flex justify-center"
         style={{ animationDelay: "0.32s" }}
       >
         <Link
@@ -46,7 +46,6 @@ export default function LandingHero() {
         >
           Entrer dans le jeu ⚽
         </Link>
-        <span className="text-xs text-slate-400">🔒 Accès sur invitation</span>
       </div>
 
       <div
