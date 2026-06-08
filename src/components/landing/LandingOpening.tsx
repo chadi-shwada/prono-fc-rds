@@ -59,15 +59,6 @@ export default function LandingOpening({ name }: { name: string }) {
             "conic-gradient(from 90deg at 50% -12%, transparent 0deg, rgba(255,255,255,0.12) 26deg, transparent 52deg, transparent 128deg, rgba(255,255,255,0.12) 154deg, transparent 180deg)",
         }}
       />
-      {/* Bandes de pelouse en bas */}
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3"
-        style={{
-          background:
-            "repeating-linear-gradient(90deg, rgba(16,185,129,0.10) 0 44px, transparent 44px 88px)",
-        }}
-      />
-
       {/* Ballon qui arrive en tournant */}
       <div className="opening-ball relative z-10 text-7xl drop-shadow-[0_0_34px_rgba(255,255,255,0.45)] sm:text-8xl">
         ⚽
