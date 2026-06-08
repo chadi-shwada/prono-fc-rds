@@ -6,16 +6,18 @@ import { SCORING } from "@/lib/constants";
 import Countdown from "@/components/Countdown";
 import FlagsMarquee from "@/components/FlagsMarquee";
 import Particles from "@/components/Particles";
-import Reveal from "@/components/Reveal";
 import Logo from "@/components/Logo";
 import LandingHero from "@/components/landing/LandingHero";
 import FeatureCard from "@/components/landing/FeatureCard";
 import LandingPreview from "@/components/landing/LandingPreview";
 import LandingConfetti from "@/components/landing/LandingConfetti";
+import WorkPcNotice from "@/components/landing/WorkPcNotice";
 
 export const dynamic = "force-dynamic";
 
 // Landing publique (visiteurs non connectés). Les connectés filent au tableau de bord.
+// Volontairement rendue serveur + CSS (sans dépendre du JS) : elle reste lisible
+// même si le réseau bloque /_next/static (cas du réseau d'entreprise).
 export default async function Landing() {
   if (await getCurrentUser()) redirect("/dashboard");
 
@@ -49,25 +51,26 @@ export default async function Landing() {
       </header>
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-16 sm:px-6">
-        {/* Hero animé */}
+        {/* Affiché uniquement si le JS est bloqué (réseau entreprise) */}
+        <div className="pt-4">
+          <WorkPcNotice />
+        </div>
+
+        {/* Hero (serveur + CSS) */}
         <LandingHero />
 
         {/* Compte à rebours */}
         {firstMatch && (
-          <Reveal delay={0.1}>
-            <div className="mx-auto mt-10 max-w-md">
-              <Countdown target={firstMatch.kickoff.toISOString()} />
-            </div>
-          </Reveal>
+          <div className="rise-in mx-auto mt-10 max-w-md" style={{ animationDelay: "0.1s" }}>
+            <Countdown target={firstMatch.kickoff.toISOString()} />
+          </div>
         )}
 
         {/* Comment ça marche */}
         <section className="mt-16">
-          <Reveal>
-            <h2 className="text-center font-display text-3xl font-extrabold">
-              Comment ça marche
-            </h2>
-          </Reveal>
+          <h2 className="rise-in text-center font-display text-3xl font-extrabold">
+            Comment ça marche
+          </h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             <FeatureCard
               delay={0.05}
@@ -92,14 +95,14 @@ export default async function Landing() {
 
         {/* Aperçu de l'app */}
         <section className="mt-16">
-          <Reveal>
+          <div className="rise-in">
             <h2 className="text-center font-display text-3xl font-extrabold">
               Un avant-goût
             </h2>
             <p className="mt-1 text-center text-slate-400">
               Pronos, scores en direct et classement qui bouge.
             </p>
-          </Reveal>
+          </div>
           <div className="mt-7">
             <LandingPreview />
           </div>
@@ -107,62 +110,52 @@ export default async function Landing() {
 
         {/* Barème */}
         <section className="mt-16">
-          <Reveal>
-            <h2 className="text-center font-display text-3xl font-extrabold">
-              Le barème, en un clin d&apos;œil
-            </h2>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <div className="mx-auto mt-6 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
-              <ScoreCard points={SCORING.EXACT} label="Score exact" />
-              <ScoreCard points={SCORING.DIFF} label="Bon résultat + écart" />
-              <ScoreCard points={SCORING.RESULT} label="Bon résultat" />
-              <ScoreCard points={`+${SCORING.CHAMPION_BONUS}`} label="Bonus champion" gold />
-            </div>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <p className="mt-4 text-center text-sm text-slate-400">
-              Les phases finales comptent <strong>double</strong>{" "}
-              (×{SCORING.KNOCKOUT_MULTIPLIER}) — chaque prono devient décisif.
-            </p>
-          </Reveal>
+          <h2 className="rise-in text-center font-display text-3xl font-extrabold">
+            Le barème, en un clin d&apos;œil
+          </h2>
+          <div className="rise-in mx-auto mt-6 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
+            <ScoreCard points={SCORING.EXACT} label="Score exact" />
+            <ScoreCard points={SCORING.DIFF} label="Bon résultat + écart" />
+            <ScoreCard points={SCORING.RESULT} label="Bon résultat" />
+            <ScoreCard points={`+${SCORING.CHAMPION_BONUS}`} label="Bonus champion" gold />
+          </div>
+          <p className="mt-4 text-center text-sm text-slate-400">
+            Les phases finales comptent <strong>double</strong>{" "}
+            (×{SCORING.KNOCKOUT_MULTIPLIER}) — chaque prono devient décisif.
+          </p>
         </section>
 
         {/* Bandeau drapeaux */}
         {codes.length > 0 && (
-          <Reveal delay={0.1}>
-            <div className="mt-14">
-              <FlagsMarquee codes={codes} />
-            </div>
-          </Reveal>
+          <div className="rise-in mt-14">
+            <FlagsMarquee codes={codes} />
+          </div>
         )}
 
         {/* CTA final */}
         <section className="mt-16">
-          <Reveal>
-            <div className="glass relative overflow-hidden rounded-3xl p-8 text-center sm:p-10">
-              <div className="float pointer-events-none absolute -right-6 -top-6 text-7xl opacity-10">
-                🏆
-              </div>
-              <h2 className="font-display text-3xl font-extrabold">
-                Prêt à entrer sur le terrain ?
-              </h2>
-              <p className="mx-auto mt-2 max-w-md text-slate-300">
-                Connecte-toi avec ton pseudo et le code d&apos;invitation partagé par
-                l&apos;organisateur. Ton compte se crée tout seul.
-              </p>
-              <Link
-                href="/login"
-                className="pulse-glow mt-6 inline-block rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 px-7 py-3.5 font-display text-lg font-bold text-emerald-950 transition-transform duration-200 hover:scale-[1.04] active:scale-95"
-              >
-                Faire mes pronos ⚽
-              </Link>
+          <div className="glass rise-in relative overflow-hidden rounded-3xl p-8 text-center sm:p-10">
+            <div className="float pointer-events-none absolute -right-6 -top-6 text-7xl opacity-10">
+              🏆
             </div>
-          </Reveal>
+            <h2 className="font-display text-3xl font-extrabold">
+              Prêt à entrer sur le terrain ?
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-slate-300">
+              Connecte-toi avec ton pseudo et le code d&apos;invitation partagé par
+              l&apos;organisateur. Ton compte se crée tout seul.
+            </p>
+            <Link
+              href="/login"
+              className="pulse-glow mt-6 inline-block rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 px-7 py-3.5 font-display text-lg font-bold text-emerald-950 transition-transform duration-200 hover:scale-[1.04] active:scale-95"
+            >
+              Faire mes pronos ⚽
+            </Link>
+          </div>
         </section>
       </main>
 
-      <footer className="border-t border-white/10 py-5 text-center text-xs text-slate-400">
+      <footer className="border-t border-white/10 px-4 py-5 text-center text-xs text-slate-400">
         Prono FC RDS · Coupe du Monde 2026 · entre collègues RATP
       </footer>
     </div>

@@ -1,60 +1,43 @@
-"use client";
-
 import Link from "next/link";
-import { motion } from "motion/react";
 import Logo from "@/components/Logo";
-import AnimatedNumber from "@/components/AnimatedNumber";
 
-const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number];
-
-// Apparition « qui monte », déclinable en cascade via `delay`.
-function rise(delay: number) {
-  return {
-    initial: { opacity: 0, y: 22 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6, delay, ease: EASE },
-  };
-}
-
+// Rendu serveur + animations CSS : reste visible même si le JavaScript est
+// bloqué par le réseau (les anims jouent en CSS, sans dépendre du JS).
 export default function LandingHero() {
   return (
-    <section className="relative flex flex-col items-center gap-5 pt-12 text-center sm:pt-16">
-      <motion.span
-        {...rise(0.05)}
-        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-slate-300"
+    <section className="flex flex-col items-center gap-5 pt-12 text-center sm:pt-16">
+      <span
+        className="rise-in inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-slate-300"
+        style={{ animationDelay: "0.02s" }}
       >
         ⚽ Coupe du Monde 2026 · entre collègues RATP
-      </motion.span>
+      </span>
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.6, rotate: -14 }}
-        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-        transition={{ type: "spring", stiffness: 200, damping: 13, delay: 0.1 }}
-      >
+      <div className="rise-in" style={{ animationDelay: "0.08s" }}>
         <div className="float drop-shadow-[0_0_34px_rgba(16,185,129,0.5)]">
           <Logo size={94} className="rounded-[22px]" />
         </div>
-      </motion.div>
+      </div>
 
-      <motion.h1
-        {...rise(0.22)}
-        className="font-display text-5xl font-extrabold leading-[1.05] sm:text-7xl"
+      <h1
+        className="rise-in font-display text-5xl font-extrabold leading-[1.05] sm:text-7xl"
+        style={{ animationDelay: "0.16s" }}
       >
         Prono FC <span className="text-gradient">RDS</span>
-      </motion.h1>
+      </h1>
 
-      <motion.p
-        {...rise(0.32)}
-        className="max-w-xl text-balance text-lg text-slate-300"
+      <p
+        className="rise-in max-w-xl text-balance text-lg text-slate-300"
+        style={{ animationDelay: "0.24s" }}
       >
         Le pronostic maison de la Coupe du Monde 2026. Devine les scores, grimpe
         au classement et chambre tes collègues — du match d&apos;ouverture à la
         finale.
-      </motion.p>
+      </p>
 
-      <motion.div
-        {...rise(0.42)}
-        className="flex flex-col items-center gap-3 sm:flex-row"
+      <div
+        className="rise-in flex flex-col items-center gap-3 sm:flex-row"
+        style={{ animationDelay: "0.32s" }}
       >
         <Link
           href="/login"
@@ -63,31 +46,31 @@ export default function LandingHero() {
           Entrer dans le jeu ⚽
         </Link>
         <span className="text-xs text-slate-400">🔒 Accès sur invitation</span>
-      </motion.div>
+      </div>
 
-      <motion.div
-        {...rise(0.52)}
-        className="mt-2 flex items-center gap-3 text-sm text-slate-400 sm:gap-5"
+      <div
+        className="rise-in mt-2 flex items-center gap-3 text-sm text-slate-400 sm:gap-5"
+        style={{ animationDelay: "0.4s" }}
       >
-        <Stat n={48} label="équipes" />
+        <Stat n="48" label="équipes" />
         <span className="text-slate-700">•</span>
-        <Stat n={104} label="matchs" />
+        <Stat n="104" label="matchs" />
         <span className="text-slate-700">•</span>
-        <Stat n={1} label="champion" />
-      </motion.div>
+        <Stat n="1" label="champion" />
+      </div>
 
-      <motion.div {...rise(0.7)} className="mt-2" aria-hidden>
+      <div className="rise-in mt-2" style={{ animationDelay: "0.5s" }} aria-hidden>
         <span className="scroll-cue inline-block text-2xl text-slate-500">⌄</span>
-      </motion.div>
+      </div>
     </section>
   );
 }
 
-function Stat({ n, label }: { n: number; label: string }) {
+function Stat({ n, label }: { n: string; label: string }) {
   return (
     <span className="flex items-baseline gap-1.5">
       <span className="scoreboard font-display text-xl font-extrabold text-emerald-400">
-        <AnimatedNumber value={n} />
+        {n}
       </span>
       {label}
     </span>

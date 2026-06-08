@@ -156,6 +156,22 @@ body {
   to { transform: translateX(-50%); }
 }
 
+/* Apparition au chargement, en pur CSS → s'affiche même si le JS est bloqué
+   (réseau d'entreprise qui filtre /_next/static). */
+.rise-in {
+  animation: riseIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Lueur emerald pulsée (bouton d'action principal de la landing) */
 .pulse-glow {
   animation: pulseGlow 2.4s ease-in-out infinite;
@@ -273,7 +289,8 @@ body {
   .particle-float,
   .skeleton::after,
   .pulse-glow,
-  .scroll-cue {
+  .scroll-cue,
+  .rise-in {
     animation: none;
   }
   .card-hover:hover {
