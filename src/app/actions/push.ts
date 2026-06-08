@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { isPushConfigured, sendTestNotification, broadcastToAll } from "@/lib/push";
+import { isDiscordWebhookEnabled, postToDiscord } from "@/lib/discord";
 
 type SubInput = {
   endpoint: string;
@@ -60,7 +61,7 @@ export async function broadcastNotificationAction(
 ): Promise<BroadcastResult> {
   const user = await getCurrentUser();
   if (!user?.isAdmin) return { ok: false, devices: 0, error: "Accès refusé." };
-  if (!isPushConfigured()) {
+  if (!isPushConfigured() && !isDiscordWebhookEnabled()) {
     return { ok: false, devices: 0, error: "Notifications non configurées." };
   }
   const body = message.trim().slice(0, 180);
@@ -71,5 +72,6 @@ export async function broadcastNotificationAction(
     body,
     url: "/dashboard",
   });
+  if (isDiscordWebhookEnabled()) await postToDiscord(`📣 ${body}`);
   return { ok: true, devices };
 }

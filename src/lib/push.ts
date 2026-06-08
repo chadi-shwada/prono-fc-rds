@@ -2,6 +2,11 @@ import "server-only";
 import webpush from "web-push";
 import { prisma } from "@/lib/prisma";
 import { MATCH_STATUS } from "@/lib/constants";
+import {
+  isDiscordWebhookEnabled,
+  postToDiscord,
+  siteUrl,
+} from "@/lib/discord";
 
 const PUBLIC = process.env.VAPID_PUBLIC_KEY;
 const PRIVATE = process.env.VAPID_PRIVATE_KEY;
@@ -77,13 +82,16 @@ export async function broadcastToAll(payload: Payload): Promise<number> {
 }
 
 /**
- * Envoie les notifications en attente (idempotent grâce aux horodatages) :
- *  - rappel ~1h avant le coup d'envoi aux joueurs sans prono,
- *  - résultat final aux joueurs ayant pronostiqué.
+ * Envoie les notifications en attente (push + Discord), idempotent grâce aux
+ * horodatages :
+ *  - rappel ~1h avant le coup d'envoi (push aux joueurs sans prono + Discord),
+ *  - résultat final (push aux pronostiqueurs + Discord).
  * Appelé après chaque synchro (cron).
  */
-export async function runPushNotifications(): Promise<void> {
-  if (!ensureConfigured()) return;
+export async function runNotifications(): Promise<void> {
+  const pushOn = ensureConfigured();
+  const discordOn = isDiscordWebhookEnabled();
+  if (!pushOn && !discordOn) return;
   const now = new Date();
 
   // 1) Résultats des matchs terminés non encore notifiés.
@@ -102,15 +110,22 @@ export async function runPushNotifications(): Promise<void> {
   });
   for (const m of finished) {
     const label = `${m.homeTeam?.name ?? "?"} ${m.homeScore}-${m.awayScore} ${m.awayTeam?.name ?? "?"}`;
-    await Promise.all(
-      m.predictions.map((p) =>
-        sendToUser(p.userId, {
-          title: "Résultat ⚽",
-          body: `${label} · tu marques ${p.points ?? 0} pt${(p.points ?? 0) > 1 ? "s" : ""} !`,
-          url: `/matchs/${m.id}`,
-        }),
-      ),
-    );
+    if (pushOn) {
+      await Promise.all(
+        m.predictions.map((p) =>
+          sendToUser(p.userId, {
+            title: "Résultat ⚽",
+            body: `${label} · tu marques ${p.points ?? 0} pt${(p.points ?? 0) > 1 ? "s" : ""} !`,
+            url: `/matchs/${m.id}`,
+          }),
+        ),
+      );
+    }
+    if (discordOn) {
+      await postToDiscord(
+        `⚽ **${label}** — terminé ! Classement à jour 👉 ${siteUrl()}/classement`,
+      );
+    }
     await prisma.match.update({
       where: { id: m.id },
       data: { resultNotifiedAt: new Date() },
@@ -133,24 +148,33 @@ export async function runPushNotifications(): Promise<void> {
     },
   });
   if (upcoming.length > 0) {
-    const subUsers = await prisma.pushSubscription.findMany({
-      select: { userId: true },
-      distinct: ["userId"],
-    });
+    const subUsers = pushOn
+      ? await prisma.pushSubscription.findMany({
+          select: { userId: true },
+          distinct: ["userId"],
+        })
+      : [];
     const allUserIds = subUsers.map((s) => s.userId);
     for (const m of upcoming) {
-      const predicted = new Set(m.predictions.map((p) => p.userId));
-      const targets = allUserIds.filter((uid) => !predicted.has(uid));
       const label = `${m.homeTeam?.name ?? "?"} - ${m.awayTeam?.name ?? "?"}`;
-      await Promise.all(
-        targets.map((uid) =>
-          sendToUser(uid, {
-            title: "N'oublie pas ton prono ⏰",
-            body: `${label} commence bientôt — place ton score !`,
-            url: "/matchs",
-          }),
-        ),
-      );
+      if (pushOn) {
+        const predicted = new Set(m.predictions.map((p) => p.userId));
+        const targets = allUserIds.filter((uid) => !predicted.has(uid));
+        await Promise.all(
+          targets.map((uid) =>
+            sendToUser(uid, {
+              title: "N'oublie pas ton prono ⏰",
+              body: `${label} commence bientôt — place ton score !`,
+              url: "/matchs",
+            }),
+          ),
+        );
+      }
+      if (discordOn) {
+        await postToDiscord(
+          `⏰ **${label}** commence dans moins d'1h — placez vos pronos ! 👉 ${siteUrl()}/matchs`,
+        );
+      }
       await prisma.match.update({
         where: { id: m.id },
         data: { reminderSentAt: new Date() },

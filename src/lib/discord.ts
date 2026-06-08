@@ -5,9 +5,30 @@ import "server-only";
 
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
+const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 
-function siteUrl(): string {
+export function siteUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+}
+
+/** Annonces dans un salon Discord activées sur cette instance ? */
+export function isDiscordWebhookEnabled(): boolean {
+  return !!WEBHOOK_URL;
+}
+
+/** Poste un message dans le salon Discord (best-effort, sans mention). */
+export async function postToDiscord(content: string): Promise<void> {
+  if (!WEBHOOK_URL) return;
+  try {
+    await fetch(WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content, allowed_mentions: { parse: [] } }),
+      cache: "no-store",
+    });
+  } catch {
+    // best-effort
+  }
 }
 
 function redirectUri(): string {

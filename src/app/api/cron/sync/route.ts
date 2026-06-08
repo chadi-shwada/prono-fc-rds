@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { syncFromFootballData } from "@/lib/football-api";
 import { recomputeChampionBonus } from "@/lib/scoring";
 import { purgeExpiredSessions } from "@/lib/auth";
-import { runPushNotifications } from "@/lib/push";
+import { runNotifications } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -29,8 +29,8 @@ export async function GET(request: Request) {
     const result = await syncFromFootballData();
     await recomputeChampionBonus();
     const sessionsPurged = await purgeExpiredSessions();
-    // Notifications push (rappels + résultats), idempotent.
-    await runPushNotifications();
+    // Notifications (push + Discord) : rappels + résultats, idempotent.
+    await runNotifications();
     return NextResponse.json({ ok: true, ...result, sessionsPurged });
   } catch (e) {
     return NextResponse.json(
