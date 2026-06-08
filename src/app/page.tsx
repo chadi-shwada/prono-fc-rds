@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -30,6 +32,10 @@ export default async function Landing() {
   const codes = teams.map((t) => t.code);
   const discordLogin = isDiscordEnabled();
   const thePrize = prize();
+  // Mascotte Nitro affichée seulement si le fichier est présent (sinon on garde
+  // le logo Discord SVG) → pas d'image cassée si public/discord-nitro.png manque.
+  const hasNitroImage =
+    discordLogin && existsSync(join(process.cwd(), "public", "discord-nitro.png"));
 
   return (
     <div className="relative flex min-h-screen flex-col">
@@ -69,7 +75,7 @@ export default async function Landing() {
         {thePrize && (
           <div className="rise-in mx-auto mt-8 max-w-xl overflow-hidden rounded-2xl border border-[#5865F2]/40 bg-gradient-to-br from-[#5865F2]/20 via-[#9b59f6]/10 to-[#ff73fa]/15 p-5">
             <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:gap-5 sm:text-left">
-              {discordLogin ? (
+              {hasNitroImage ? (
                 // Instance Discord : mascotte Nitro (image dans public/discord-nitro.png).
                 // <img> volontaire (pas next/image) : la landing doit rester visible
                 // même si le JS est bloqué (réseau d'entreprise).
