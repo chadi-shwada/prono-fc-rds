@@ -9,6 +9,7 @@ import SyncButton from "@/components/SyncButton";
 import CreateCodeForm from "@/components/CreateCodeForm";
 import ResetPronosButton from "@/components/ResetPronosButton";
 import TestNotificationButton from "@/components/TestNotificationButton";
+import BroadcastForm from "@/components/BroadcastForm";
 import { isPushConfigured } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +67,15 @@ export default async function AdminPage() {
             appareils où tu les as activées).
           </p>
           <TestNotificationButton />
+
+          <div className="mt-5 border-t border-white/10 pt-4">
+            <h3 className="mb-1 font-semibold">📣 Message à tous</h3>
+            <p className="mb-3 text-sm text-slate-400">
+              Envoie une notification à tous les joueurs qui ont activé les
+              notifications.
+            </p>
+            <BroadcastForm />
+          </div>
         </section>
       )}
 

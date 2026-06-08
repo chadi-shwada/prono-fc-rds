@@ -44,22 +44,36 @@ async function sendToUser(userId: string, payload: Payload): Promise<void> {
   if (!ensureConfigured()) return;
   const subs = await prisma.pushSubscription.findMany({ where: { userId } });
   const data = JSON.stringify(payload);
-  await Promise.all(
-    subs.map(async (s) => {
-      try {
-        await webpush.sendNotification(
-          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-          data,
-        );
-      } catch (e: unknown) {
-        const code = (e as { statusCode?: number }).statusCode;
-        // 404/410 = abonnement expiré → on le supprime.
-        if (code === 404 || code === 410) {
-          await prisma.pushSubscription.delete({ where: { id: s.id } }).catch(() => {});
-        }
-      }
-    }),
-  );
+  await Promise.all(subs.map((s) => sendOne(s, data)));
+}
+
+type Sub = { id: string; endpoint: string; p256dh: string; auth: string };
+
+/** Envoie à un abonnement ; supprime l'abonnement s'il est expiré (404/410). */
+async function sendOne(s: Sub, data: string): Promise<boolean> {
+  try {
+    await webpush.sendNotification(
+      { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+      data,
+    );
+    return true;
+  } catch (e: unknown) {
+    const code = (e as { statusCode?: number }).statusCode;
+    // 404/410 = abonnement expiré → on le supprime.
+    if (code === 404 || code === 410) {
+      await prisma.pushSubscription.delete({ where: { id: s.id } }).catch(() => {});
+    }
+    return false;
+  }
+}
+
+/** Diffuse une notif à TOUS les abonnés. Renvoie le nombre d'appareils atteints. */
+export async function broadcastToAll(payload: Payload): Promise<number> {
+  if (!ensureConfigured()) return 0;
+  const subs = await prisma.pushSubscription.findMany();
+  const data = JSON.stringify(payload);
+  const results = await Promise.all(subs.map((s) => sendOne(s, data)));
+  return results.filter(Boolean).length;
 }
 
 /**

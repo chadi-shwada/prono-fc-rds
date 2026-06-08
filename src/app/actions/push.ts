@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { isPushConfigured, sendTestNotification } from "@/lib/push";
+import { isPushConfigured, sendTestNotification, broadcastToAll } from "@/lib/push";
 
 type SubInput = {
   endpoint: string;
@@ -50,4 +50,26 @@ export async function sendTestNotificationAction(): Promise<TestResult> {
     return { ok: false, sent: 0, error: "Aucun abonnement : active d'abord les notifications sur ton Profil." };
   }
   return { ok: true, sent };
+}
+
+export type BroadcastResult = { ok: boolean; devices: number; error?: string };
+
+/** Diffuse une notification à tous les abonnés (admin uniquement). */
+export async function broadcastNotificationAction(
+  message: string,
+): Promise<BroadcastResult> {
+  const user = await getCurrentUser();
+  if (!user?.isAdmin) return { ok: false, devices: 0, error: "Accès refusé." };
+  if (!isPushConfigured()) {
+    return { ok: false, devices: 0, error: "Notifications non configurées." };
+  }
+  const body = message.trim().slice(0, 180);
+  if (!body) return { ok: false, devices: 0, error: "Message vide." };
+
+  const devices = await broadcastToAll({
+    title: "Prono FC RDS 📣",
+    body,
+    url: "/dashboard",
+  });
+  return { ok: true, devices };
 }
