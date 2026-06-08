@@ -172,26 +172,28 @@ body {
   }
 }
 
-/* Intro « coup d'envoi » de la landing : pop du logo + montée du titre */
-.opening-pop {
-  animation: openingPop 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+/* Intro « coup d'envoi » de la landing — ambiance Coupe du Monde */
+/* Le ballon arrive du haut en tournant, puis se stabilise (rebond) */
+.opening-ball {
+  animation: openingBall 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
-@keyframes openingPop {
+@keyframes openingBall {
   0% {
     opacity: 0;
-    transform: scale(0.4) rotate(-8deg);
+    transform: translateY(-48px) rotate(-200deg) scale(0.4);
   }
-  60% {
+  70% {
     opacity: 1;
-    transform: scale(1.08) rotate(2deg);
+    transform: translateY(0) rotate(18deg) scale(1.12);
   }
   100% {
     opacity: 1;
-    transform: scale(1) rotate(0);
+    transform: translateY(0) rotate(0) scale(1);
   }
 }
+/* Montée des éléments (titre, trophée) */
 .opening-rise {
-  animation: openingRise 0.7s ease-out 0.25s both;
+  animation: openingRise 0.7s ease-out 0.3s both;
 }
 @keyframes openingRise {
   from {
@@ -201,6 +203,21 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+/* Projecteurs de stade qui s'allument puis se stabilisent */
+.opening-beam {
+  animation: openingBeam 2.4s ease-in-out both;
+}
+@keyframes openingBeam {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0.16;
   }
 }
 
@@ -322,8 +339,9 @@ body {
   .skeleton::after,
   .pulse-glow,
   .scroll-cue,
-  .opening-pop,
+  .opening-ball,
   .opening-rise,
+  .opening-beam,
   .rise-in {
     animation: none;
   }

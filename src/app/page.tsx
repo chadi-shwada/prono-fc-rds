@@ -41,8 +41,8 @@ export default async function Landing() {
     <div className="relative flex min-h-screen flex-col">
       {/* Ambiance : ballons/coupes qui flottent (l'aurore est dans le layout racine) */}
       <Particles />
-      {/* Intro « coup d'envoi » : splash logo + Coupe du Monde 2026 + confettis */}
-      <LandingOpening name={appName()} />
+      {/* Intro « coup d'envoi » — instance Discord uniquement */}
+      {discordLogin && <LandingOpening name={appName()} />}
 
       {/* Barre publique */}
       <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/70 backdrop-blur">
