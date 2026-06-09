@@ -11,8 +11,8 @@ const FALLBACK_CODES = [
   "USA", "MEX", "CAN", "CRO", "MAR", "JPN", "SEN", "URU",
 ];
 
-// Intro « coup d'envoi » de la landing (instance Discord uniquement) : ambiance
-// Coupe du Monde — pelouse + projecteurs de stade, ballon qui arrive en tournant,
+// Intro « coup d'envoi » de la landing : ambiance Coupe du Monde — pelouse +
+// projecteurs de stade, ballon qui arrive en tournant,
 // titre « Coupe du Monde 2026 » en or (couleur du trophée FIFA) + trophées, puis
 // fondu avec un double burst de confettis. Rejoué à chaque chargement de la
 // landing, désactivé si l'utilisateur préfère moins d'animations.

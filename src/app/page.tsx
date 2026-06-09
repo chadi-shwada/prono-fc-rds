@@ -41,8 +41,9 @@ export default async function Landing() {
     <div className="relative flex min-h-screen flex-col">
       {/* Ambiance : ballons/coupes qui flottent (l'aurore est dans le layout racine) */}
       <Particles />
-      {/* Intro « coup d'envoi » — instance Discord uniquement */}
-      {discordLogin && <LandingOpening name={appName()} codes={codes} />}
+      {/* Intro « coup d'envoi » (rendue après hydratation → sans effet si le JS
+          est bloqué, la landing reste visible) */}
+      <LandingOpening name={appName()} codes={codes} />
 
       {/* Barre publique */}
       <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/70 backdrop-blur">
