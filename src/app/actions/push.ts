@@ -11,11 +11,37 @@ type SubInput = {
   keys: { p256dh: string; auth: string };
 };
 
+/**
+ * L'endpoint vient du navigateur du client : on le valide pour empêcher un
+ * utilisateur malveillant de faire contacter par le serveur une URL arbitraire
+ * (SSRF) via l'envoi de notifications — les vrais services push (FCM, Mozilla,
+ * APNs web…) sont toujours en HTTPS sur un nom de domaine public.
+ */
+function isValidPushEndpoint(endpoint: string): boolean {
+  if (endpoint.length > 1024) return false;
+  let u: URL;
+  try {
+    u = new URL(endpoint);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== "https:") return false;
+  const host = u.hostname.toLowerCase();
+  if (host === "localhost" || host.endsWith(".local") || host.endsWith(".internal")) {
+    return false;
+  }
+  // Pas d'IP littérale (IPv4 ou IPv6) : bloque les adresses internes/cloud.
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(":")) return false;
+  return host.includes(".");
+}
+
 /** Enregistre (ou met à jour) l'abonnement push du navigateur courant. */
 export async function savePushSubscriptionAction(sub: SubInput): Promise<void> {
   const user = await getCurrentUser();
   if (!user) return;
   if (!sub?.endpoint || !sub.keys?.p256dh || !sub.keys?.auth) return;
+  if (!isValidPushEndpoint(sub.endpoint)) return;
+  if (sub.keys.p256dh.length > 256 || sub.keys.auth.length > 256) return;
 
   await prisma.pushSubscription.upsert({
     where: { endpoint: sub.endpoint },

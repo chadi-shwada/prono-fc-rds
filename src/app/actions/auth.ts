@@ -1,13 +1,26 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { createSession, destroySession } from "@/lib/auth";
+import { isRateLimited, recordAttempt } from "@/lib/rateLimit";
 
 export type ActionState = { error?: string } | undefined;
 
+// Anti-bruteforce du code d'invitation : seuls les ÉCHECS comptent, pour ne
+// jamais bloquer des collègues légitimes derrière la même IP (NAT d'entreprise).
+const AUTH_FAILURE_MAX = 15;
+const AUTH_FAILURE_WINDOW_MS = 10 * 60_000;
+
 function clean(v: FormDataEntryValue | null): string {
   return (v ?? "").toString().trim();
+}
+
+async function clientIp(): Promise<string> {
+  const h = await headers();
+  // Caddy (reverse proxy) renseigne X-Forwarded-For ; on prend le 1er hop.
+  return (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
 }
 
 /**
@@ -26,8 +39,15 @@ export async function authAction(
     return { error: "Le pseudo doit faire entre 2 et 20 caractères." };
   }
 
+  const ip = await clientIp();
+  const rlKey = `auth:${ip}`;
+  if (isRateLimited(rlKey, AUTH_FAILURE_MAX)) {
+    return { error: "Trop de tentatives. Réessaie dans quelques minutes." };
+  }
+
   const invite = await prisma.inviteCode.findUnique({ where: { code } });
   if (!invite || !invite.active) {
+    recordAttempt(rlKey, AUTH_FAILURE_WINDOW_MS);
     return { error: "Code d'invitation invalide." };
   }
 
@@ -40,6 +60,7 @@ export async function authAction(
 
   if (!user) {
     if (invite.maxUses !== null && invite.uses >= invite.maxUses) {
+      recordAttempt(rlKey, AUTH_FAILURE_WINDOW_MS);
       return { error: "Ce code d'invitation a atteint sa limite d'utilisation." };
     }
     user = await prisma.user.create({ data: { name } });

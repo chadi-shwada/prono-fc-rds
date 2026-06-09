@@ -14,6 +14,13 @@ export async function toggleReactionAction(
   if (!user) return;
   if (!(REACTION_EMOJIS as readonly string[]).includes(emoji)) return;
 
+  // Match inexistant → on ignore (évite une erreur de contrainte FK).
+  const match = await prisma.match.findUnique({
+    where: { id: matchId },
+    select: { id: true },
+  });
+  if (!match) return;
+
   const existing = await prisma.reaction.findUnique({
     where: { userId_matchId_emoji: { userId: user.id, matchId, emoji } },
   });
