@@ -33,6 +33,25 @@ export default function AuthForm() {
         />
       </label>
 
+      {/* PIN demandé uniquement pour les comptes admin (protégés) */}
+      {state?.needPin && (
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium text-slate-200">PIN admin</span>
+          <input
+            name="pin"
+            type="password"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={8}
+            required
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+            className="rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-white outline-none transition focus:border-emerald-400 focus:bg-white/10"
+            placeholder="4 à 8 chiffres"
+          />
+        </label>
+      )}
+
       {state?.error && (
         <p className="rounded-lg bg-red-500/15 px-3 py-2 text-sm text-red-300">
           {state.error}

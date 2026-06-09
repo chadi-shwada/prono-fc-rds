@@ -47,3 +47,6 @@ next-env.d.ts
 /prisma/*.db-journal
 /prisma/*.db-wal
 /prisma/*.db-shm
+
+# Sauvegardes SQLite locales (service backup du compose)
+backups/

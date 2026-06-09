@@ -7,6 +7,7 @@ import { computeBadges, bestStreak } from "@/lib/badges";
 import { getVapidPublicKey } from "@/lib/push";
 import { MATCH_STATUS } from "@/lib/constants";
 import EnableNotifications from "@/components/EnableNotifications";
+import AdminPinForm from "@/components/AdminPinForm";
 import Reveal from "@/components/Reveal";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import Flag from "@/components/Flag";
@@ -33,7 +34,7 @@ export default async function ProfilPage() {
       getPlayerOfTheDay(),
       prisma.user.findUnique({
         where: { id: user.id },
-        select: { foundEasterEgg: true },
+        select: { foundEasterEgg: true, passwordHash: true },
       }),
     ]);
 
@@ -130,6 +131,16 @@ export default async function ProfilPage() {
           <section className="glass rounded-2xl p-5">
             <h2 className="mb-3 font-display text-lg font-bold">🔔 Notifications</h2>
             <EnableNotifications publicKey={vapidKey} />
+          </section>
+        </Reveal>
+      )}
+
+      {/* PIN admin : protège le login pseudo+code du compte (code partagé) */}
+      {user.isAdmin && (
+        <Reveal delay={0.09}>
+          <section className="glass rounded-2xl p-5">
+            <h2 className="mb-3 font-display text-lg font-bold">🔐 PIN admin</h2>
+            <AdminPinForm hasPin={!!me?.passwordHash} />
           </section>
         </Reveal>
       )}

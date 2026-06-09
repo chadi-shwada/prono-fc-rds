@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 // Bootstrap production : crée (si absents) le compte admin et un code d'invitation.
 // Aucune donnée de démo — le vrai calendrier vient de la synchro API.
@@ -29,11 +30,27 @@ async function main() {
   }
 
   const adminName = process.env.SEED_ADMIN_NAME ?? "chadi";
-  await prisma.user.upsert({
+  const admin = await prisma.user.upsert({
     where: { name: adminName },
     update: { isAdmin: true },
     create: { name: adminName, isAdmin: true },
   });
+
+  // PIN admin initial (SEED_ADMIN_PIN, 4-8 chiffres) : posé seulement si le
+  // compte n'en a pas déjà un — un PIN changé depuis le profil n'est jamais
+  // écrasé au redémarrage du conteneur.
+  const pin = (process.env.SEED_ADMIN_PIN ?? "").trim();
+  if (pin && !admin.passwordHash) {
+    if (/^\d{4,8}$/.test(pin)) {
+      await prisma.user.update({
+        where: { id: admin.id },
+        data: { passwordHash: await bcrypt.hash(pin, 10) },
+      });
+      console.log("✓ PIN admin initialisé (SEED_ADMIN_PIN)");
+    } else {
+      console.warn("⚠ SEED_ADMIN_PIN ignoré : il faut 4 à 8 chiffres.");
+    }
+  }
 
   console.log(`✓ Bootstrap : admin « ${adminName} », code d'invitation « ${code} »`);
 }
