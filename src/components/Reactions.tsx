@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { motion } from "motion/react";
-import { REACTION_EMOJIS, toggleReactionAction } from "@/app/actions/reactions";
+import { toggleReactionAction } from "@/app/actions/reactions";
+import { REACTION_EMOJIS } from "@/lib/reactions";
 
 // Barre de réactions emoji (chambrage). Mise à jour optimiste, puis confirmée
 // par la revalidation côté serveur.

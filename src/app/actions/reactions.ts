@@ -3,9 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-
-/** Palette de réactions autorisées (chambrage entre collègues). */
-export const REACTION_EMOJIS = ["🔥", "😂", "😱", "🥳", "😭", "💪"] as const;
+import { REACTION_EMOJIS } from "@/lib/reactions";
 
 /** Ajoute ou retire la réaction `emoji` de l'utilisateur sur un match. */
 export async function toggleReactionAction(
