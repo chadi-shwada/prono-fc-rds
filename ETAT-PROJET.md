@@ -7,6 +7,11 @@ déploiement **Docker**. **Deux instances** sur le **même VPS Hostinger**
 - **RATP** — https://pronofcrds.fr — connexion **pseudo + code d'invitation**.
 - **Discord (InoxStaff)** — https://discord.pronofcrds.fr — connexion **OAuth Discord**,
   branding perso, lot « 1 mois de Discord Nitro ». Easter egg désactivé.
+  ⏸️ **EN PAUSE** (les admins du Discord ont refusé toute intégration, par
+  prudence sécurité). Conteneurs `app-discord`/`cron-discord` arrêtés et profil
+  `discord` désactivé dans le `.env` du VPS. **Rien n'est perdu** (volume
+  `discord-data` conservé). Pour réactiver : décommenter `COMPOSE_PROFILES=discord`
+  dans le `.env`, restaurer `caddy-conf.d/discord.caddy`, puis `docker compose up -d`.
 
 ## Déploiement
 - **GitHub Actions** (`.github/workflows/deploy.yml`) : build l'image **en CI** →
