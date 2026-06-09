@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { motion } from "motion/react";
 import { authAction, type ActionState } from "@/app/actions/auth";
 
@@ -9,6 +9,10 @@ export default function AuthForm() {
     authAction,
     undefined,
   );
+  // Champs contrôlés : React 19 réinitialise le formulaire après une server
+  // action — sans ça, pseudo et code se vident quand le champ PIN apparaît.
+  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -18,6 +22,8 @@ export default function AuthForm() {
           name="name"
           autoComplete="username"
           required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           className="rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-white outline-none transition focus:border-emerald-400 focus:bg-white/10"
           placeholder="Ton pseudo"
         />
@@ -28,6 +34,8 @@ export default function AuthForm() {
         <input
           name="code"
           required
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
           className="rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-white outline-none transition focus:border-emerald-400 focus:bg-white/10"
           placeholder="Code partagé par l'organisateur"
         />
