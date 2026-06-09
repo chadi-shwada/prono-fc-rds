@@ -94,7 +94,7 @@ export default async function MatchsPage({
       </Reveal>
 
       {/* Prono vainqueur */}
-      <div>
+      <div id="champion" className="scroll-mt-24">
         <section className="rounded-2xl border border-amber-400/25 bg-gradient-to-br from-amber-400/10 to-transparent p-5">
           <h2 className="mb-1 font-display text-lg font-bold text-amber-300">
             🏆 Ton champion

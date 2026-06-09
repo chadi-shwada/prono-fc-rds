@@ -23,7 +23,7 @@ export default async function HomePage() {
   const user = await getCurrentUser();
   if (!user) return null; // le layout (app)/layout.tsx redirige déjà vers /login
 
-  const [leaderboard, predictionCount, upcoming, firstMatch, liveMatches, engagement] =
+  const [leaderboard, predictionCount, upcoming, firstMatch, liveMatches, engagement, myChampion] =
     await Promise.all([
       getLeaderboard(),
       prisma.prediction.count({ where: { userId: user.id } }),
@@ -40,7 +40,30 @@ export default async function HomePage() {
         include: { homeTeam: true, awayTeam: true },
       }),
       getEngagement(user.id),
+      prisma.championPrediction.findUnique({ where: { userId: user.id } }),
     ]);
+
+  // Mes pronos sur les prochains matchs affichés → état « fait / à faire »
+  // visible d'un coup d'œil, sans aller sur /matchs.
+  const myUpcomingPreds = await prisma.prediction.findMany({
+    where: { userId: user.id, matchId: { in: upcoming.map((m) => m.id) } },
+    select: { matchId: true, homeScore: true, awayScore: true },
+  });
+  const predByMatch = new Map(myUpcomingPreds.map((p) => [p.matchId, p]));
+
+  // Rappel champion : seulement tant que le tournoi n'a pas commencé.
+  const championOpen = !!firstMatch && firstMatch.kickoff > new Date();
+  const showChampionNudge = championOpen && !myChampion;
+
+  // Salutation selon l'heure de Paris (le serveur tourne en UTC).
+  const hour = Number(
+    new Intl.DateTimeFormat("fr-FR", {
+      hour: "numeric",
+      hour12: false,
+      timeZone: "Europe/Paris",
+    }).format(new Date()),
+  );
+  const greeting = hour < 6 ? "Bonsoir" : hour < 13 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
 
   const meIndex = leaderboard.findIndex((r) => r.userId === user.id);
   const rank = meIndex + 1;
@@ -65,7 +88,7 @@ export default async function HomePage() {
           <div>
             <p className="text-sm font-medium text-emerald-400">Bienvenue 👋</p>
             <h1 className="font-display text-4xl font-extrabold">
-              Salut <span className="text-gradient capitalize">{user.name}</span>
+              {greeting} <span className="text-gradient capitalize">{user.name}</span>
             </h1>
           </div>
         </div>
@@ -133,6 +156,31 @@ export default async function HomePage() {
         </Reveal>
       )}
 
+      {/* Rappel : prono champion pas encore fait (+10 pts, verrouillé au 1er match) */}
+      {showChampionNudge && (
+        <Reveal delay={0.035}>
+          <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-400/30 bg-gradient-to-br from-amber-400/[0.12] to-transparent p-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🏆</span>
+              <div>
+                <p className="font-display text-lg font-bold text-amber-300">
+                  Désigne ton champion !
+                </p>
+                <p className="text-xs text-slate-400">
+                  +10 pts bonus si tu vises juste — verrouillé au coup d&apos;envoi du tournoi.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/matchs#champion"
+              className="shrink-0 rounded-full bg-amber-400 px-4 py-2 text-sm font-semibold text-amber-950 transition hover:bg-amber-300"
+            >
+              Choisir →
+            </Link>
+          </section>
+        </Reveal>
+      )}
+
       {liveMatches.length > 0 && (
         <Reveal delay={0.04}>
           <section className="rounded-2xl border border-red-400/30 bg-gradient-to-br from-red-500/[0.12] to-transparent p-4">
@@ -187,14 +235,20 @@ export default async function HomePage() {
 
       <Reveal delay={0.08}>
         <section className="grid grid-cols-3 gap-3">
-          <Stat label="Mes points" value={<AnimatedNumber value={points} />} />
+          <Stat
+            label="Mes points"
+            value={<AnimatedNumber value={points} />}
+            href="/profil"
+          />
           <Stat
             label="Classement"
             value={ranked && rank > 0 ? `${rank}${rank === 1 ? "er" : "e"}` : "—"}
+            href="/classement"
           />
           <Stat
             label="Pronos faits"
             value={<AnimatedNumber value={predictionCount} />}
+            href="/matchs"
           />
         </section>
       </Reveal>
@@ -256,25 +310,45 @@ export default async function HomePage() {
             <p className="text-sm text-slate-400">Aucun match à venir pour le moment.</p>
           ) : (
             <ul className="flex flex-col divide-y divide-white/5">
-              {upcoming.map((m) => (
-                <li
-                  key={m.id}
-                  className="flex items-center justify-between gap-3 py-2.5 text-sm"
-                >
-                  <span className="flex items-center gap-2 font-medium">
-                    <Flag code={m.homeTeam?.code} size={28} />
-                    <span className="sm:hidden">{m.homeTeam?.code ?? "?"}</span>
-                    <span className="hidden sm:inline">{m.homeTeam?.name ?? "?"}</span>
-                    <span className="text-slate-400">vs</span>
-                    <span className="hidden sm:inline">{m.awayTeam?.name ?? "?"}</span>
-                    <span className="sm:hidden">{m.awayTeam?.code ?? "?"}</span>
-                    <Flag code={m.awayTeam?.code} size={28} />
-                  </span>
-                  <span className="text-xs text-slate-400">
-                    {formatKickoff(m.kickoff)}
-                  </span>
-                </li>
-              ))}
+              {upcoming.map((m) => {
+                const pred = predByMatch.get(m.id);
+                return (
+                  <li
+                    key={m.id}
+                    className="flex items-center justify-between gap-3 py-2.5 text-sm"
+                  >
+                    <span className="flex min-w-0 items-center gap-2 font-medium">
+                      <Flag code={m.homeTeam?.code} size={28} />
+                      <span className="sm:hidden">{m.homeTeam?.code ?? "?"}</span>
+                      <span className="hidden sm:inline">{m.homeTeam?.name ?? "?"}</span>
+                      <span className="text-slate-400">vs</span>
+                      <span className="hidden sm:inline">{m.awayTeam?.name ?? "?"}</span>
+                      <span className="sm:hidden">{m.awayTeam?.code ?? "?"}</span>
+                      <Flag code={m.awayTeam?.code} size={28} />
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2.5">
+                      <span className="hidden text-xs text-slate-400 sm:inline">
+                        {formatKickoff(m.kickoff)}
+                      </span>
+                      {pred ? (
+                        <span
+                          className="rounded-full bg-emerald-400/15 px-2.5 py-0.5 text-xs font-semibold tabular-nums text-emerald-300"
+                          title="Ton prono"
+                        >
+                          ✓ {pred.homeScore}-{pred.awayScore}
+                        </span>
+                      ) : (
+                        <Link
+                          href="/matchs"
+                          className="rounded-full bg-amber-400/15 px-2.5 py-0.5 text-xs font-semibold text-amber-300 transition hover:bg-amber-400/25"
+                        >
+                          À faire →
+                        </Link>
+                      )}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
@@ -295,16 +369,20 @@ export default async function HomePage() {
 function Stat({
   label,
   value,
+  href,
 }: {
   label: string;
   value: React.ReactNode;
+  href: string;
 }) {
   return (
-    <div className="glass rounded-2xl p-4 text-center">
+    <Link href={href} className="card-hover glass block rounded-2xl p-4 text-center">
       <div className="scoreboard font-display text-3xl font-extrabold text-emerald-400">
         {value}
       </div>
-      <div className="mt-1 text-xs text-slate-400">{label}</div>
-    </div>
+      <div className="mt-1 text-xs text-slate-400">
+        {label} <span aria-hidden className="text-slate-500">→</span>
+      </div>
+    </Link>
   );
 }
