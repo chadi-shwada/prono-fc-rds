@@ -2,7 +2,7 @@ import { type CSSProperties } from "react";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatKickoff } from "@/lib/format";
+import { dayKey, formatDayLabel, formatTime } from "@/lib/format";
 import { teamColor } from "@/lib/teamColor";
 import { STAGE_LABELS, MATCH_STATUS, type Stage } from "@/lib/constants";
 import PredictionForm from "@/components/PredictionForm";
@@ -66,6 +66,19 @@ export default async function MatchsPage({
     // à venir : matchs jouables (équipes connues, pas encore commencés)
     return m.kickoff > now && !!m.homeTeam && !!m.awayTeam;
   });
+
+  // Regroupement par jour : avec ~104 matchs, une liste plate est illisible.
+  // Chaque jour a son en-tête (collant), « Aujourd'hui / Demain » en repère.
+  type MatchItem = (typeof filtered)[number];
+  const groups: { day: string; label: string; matches: MatchItem[] }[] = [];
+  for (const m of filtered) {
+    const k = dayKey(m.kickoff);
+    const last = groups[groups.length - 1];
+    if (last?.day === k) last.matches.push(m);
+    else groups.push({ day: k, label: formatDayLabel(new Date(k)), matches: [m] });
+  }
+  const todayKey = dayKey(now);
+  const tomorrowKey = dayKey(new Date(now.getTime() + 24 * 3600_000));
 
   return (
     <div className="flex flex-col gap-6">
@@ -148,8 +161,31 @@ export default async function MatchsPage({
             : "Aucun match dans cette catégorie."}
         </p>
       ) : (
-        <ul className="grid gap-3 lg:grid-cols-2">
-          {filtered.map((m, i) => {
+        <div className="flex flex-col gap-7">
+          {groups.map((g) => (
+            <section key={g.day}>
+              <div className="sticky top-[57px] z-10 -mx-1 mb-3 px-1">
+                <div className="flex items-center gap-2.5 rounded-full border border-white/10 bg-slate-950/85 px-4 py-2 backdrop-blur">
+                  <h2 className="font-display text-sm font-bold capitalize">
+                    {g.label}
+                  </h2>
+                  {g.day === todayKey && (
+                    <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-950">
+                      Aujourd&apos;hui
+                    </span>
+                  )}
+                  {g.day === tomorrowKey && (
+                    <span className="rounded-full bg-sky-400/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-300">
+                      Demain
+                    </span>
+                  )}
+                  <span className="ml-auto text-xs text-slate-400">
+                    {g.matches.length} match{g.matches.length > 1 ? "s" : ""}
+                  </span>
+                </div>
+              </div>
+              <ul className="grid gap-3 lg:grid-cols-2">
+                {g.matches.map((m, i) => {
             const pred = predByMatch.get(m.id);
             const locked = m.kickoff <= now;
             const bothTeams = !!m.homeTeam && !!m.awayTeam;
@@ -206,8 +242,8 @@ export default async function MatchsPage({
                           <LiveBadge minute={m.liveMinute} />
                         )}
                       </span>
-                      <span className="justify-self-end whitespace-nowrap">
-                        {formatKickoff(m.kickoff)}
+                      <span className="justify-self-end whitespace-nowrap font-semibold text-slate-300">
+                        {formatTime(m.kickoff)}
                       </span>
                     </div>
 
@@ -246,8 +282,11 @@ export default async function MatchsPage({
                 </Reveal>
               </li>
             );
-          })}
-        </ul>
+                })}
+              </ul>
+            </section>
+          ))}
+        </div>
       )}
     </div>
   );
