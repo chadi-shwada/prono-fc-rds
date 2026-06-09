@@ -144,24 +144,30 @@ export default async function Landing() {
 
         {/* Comment ça marche */}
         <section id="comment" className="mt-16 scroll-mt-24">
-          <h2 className="rise-in text-center font-display text-3xl font-extrabold">
-            Comment ça marche
-          </h2>
+          <div className="rise-in text-center">
+            <span className="eyebrow">Le jeu</span>
+            <h2 className="mt-2 font-display text-3xl font-extrabold">
+              Comment ça marche
+            </h2>
+          </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             <FeatureCard
               delay={0.05}
+              step="01"
               icon="⚽"
               title="Pronostique chaque match"
               text="Un score à deviner avant chaque coup d'envoi. Plus tu es précis, plus tu marques de points."
             />
             <FeatureCard
               delay={0.12}
+              step="02"
               icon="📈"
               title="Grimpe au classement"
               text="Points en temps réel, classement par journée, badges et joueur du jour."
             />
             <FeatureCard
               delay={0.19}
+              step="03"
               icon="🏆"
               title="Le bonus champion"
               text="Désigne le vainqueur de la Coupe avant le 1er match : +10 pts si tu vises juste."
@@ -171,11 +177,12 @@ export default async function Landing() {
 
         {/* Aperçu de l'app */}
         <section id="apercu" className="mt-16 scroll-mt-24">
-          <div className="rise-in">
-            <h2 className="text-center font-display text-3xl font-extrabold">
+          <div className="rise-in text-center">
+            <span className="eyebrow">Aperçu</span>
+            <h2 className="mt-2 font-display text-3xl font-extrabold">
               Un avant-goût
             </h2>
-            <p className="mt-1 text-center text-slate-400">
+            <p className="mt-1 text-slate-400">
               Pronos, scores en direct et classement qui bouge.
             </p>
           </div>
@@ -186,9 +193,12 @@ export default async function Landing() {
 
         {/* Barème */}
         <section id="bareme" className="mt-16 scroll-mt-24">
-          <h2 className="rise-in text-center font-display text-3xl font-extrabold">
-            Le barème, en un clin d&apos;œil
-          </h2>
+          <div className="rise-in text-center">
+            <span className="eyebrow">Barème</span>
+            <h2 className="mt-2 font-display text-3xl font-extrabold">
+              Le barème, en un clin d&apos;œil
+            </h2>
+          </div>
           <div className="rise-in mx-auto mt-6 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
             <ScoreCard points={SCORING.EXACT} label="Score exact" />
             <ScoreCard points={SCORING.DIFF} label="Bon résultat + écart" />
@@ -210,7 +220,7 @@ export default async function Landing() {
 
         {/* CTA final */}
         <section className="mt-16">
-          <div className="glass rise-in relative overflow-hidden rounded-3xl p-8 text-center sm:p-10">
+          <div className="glass gradient-ring rise-in relative overflow-hidden rounded-3xl p-8 text-center sm:p-10">
             <div className="float pointer-events-none absolute -right-6 -top-6 text-7xl opacity-10">
               🏆
             </div>
@@ -232,8 +242,33 @@ export default async function Landing() {
         </section>
       </main>
 
-      <footer className="border-t border-white/10 px-4 py-5 text-center text-xs text-slate-400">
-        {appName()} · Coupe du Monde 2026 · {appTagline()}
+      <footer className="border-t border-white/10 px-4 py-8">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-5 sm:flex-row sm:justify-between">
+          <div className="flex items-center gap-2 font-display font-bold text-white">
+            <Logo size={22} />
+            <span>{appName()}</span>
+          </div>
+          <nav className="flex items-center gap-5 text-sm text-slate-400">
+            <a href="#comment" className="transition hover:text-white">
+              Comment jouer
+            </a>
+            <a href="#apercu" className="transition hover:text-white">
+              Aperçu
+            </a>
+            <a href="#bareme" className="transition hover:text-white">
+              Barème
+            </a>
+          </nav>
+          <Link
+            href="/login"
+            className="text-sm font-semibold text-emerald-400 transition hover:text-emerald-300"
+          >
+            Se connecter →
+          </Link>
+        </div>
+        <p className="mt-6 text-center text-xs text-slate-500">
+          ⚽ Coupe du Monde 2026 · {appTagline()}
+        </p>
       </footer>
     </div>
   );
