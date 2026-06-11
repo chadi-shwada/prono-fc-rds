@@ -233,7 +233,7 @@ export default async function MatchsPage({
                     )}
                     <div className="relative">
                     <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs text-slate-400">
-                      <span className="justify-self-start truncate rounded-full bg-white/10 px-2.5 py-0.5 font-medium">
+                      <span className="min-w-0 max-w-full justify-self-start truncate rounded-full bg-white/10 px-2.5 py-0.5 font-medium">
                         {STAGE_LABELS[m.stage as Stage] ?? m.stage}
                         {m.groupName ? ` · Groupe ${m.groupName}` : ""}
                       </span>

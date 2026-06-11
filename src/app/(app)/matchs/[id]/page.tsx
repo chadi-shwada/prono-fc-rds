@@ -102,14 +102,14 @@ export default async function MatchDetailPage({
           )}
           <div className="relative">
           <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs text-slate-400">
-            <span className="justify-self-start truncate rounded-full bg-white/10 px-2.5 py-0.5 font-medium">
+            <span className="min-w-0 max-w-full justify-self-start truncate rounded-full bg-white/10 px-2.5 py-0.5 font-medium">
               {STAGE_LABELS[match.stage as Stage] ?? match.stage}
               {match.groupName ? ` · Groupe ${match.groupName}` : ""}
             </span>
             <span className="justify-self-center">
               {live && <LiveBadge minute={match.liveMinute} />}
             </span>
-            <span className="justify-self-end whitespace-nowrap">
+            <span className="min-w-0 justify-self-end truncate whitespace-nowrap">
               {formatKickoff(match.kickoff)}
             </span>
           </div>
