@@ -29,7 +29,9 @@ export default function LandingOpening({
   useEffect(() => {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
 
-    setPhase("in");
+    // Affiche l'intro à la frame suivante : laisse la transition CSS d'entrée
+    // démarrer et évite un setState synchrone dans le corps de l'effet.
+    const raf = requestAnimationFrame(() => setPhase("in"));
     const tOut = setTimeout(() => {
       setPhase("out");
       // Coup d'envoi : double tir de confettis or/vert depuis les deux côtés.
@@ -46,6 +48,7 @@ export default function LandingOpening({
     }, 1700);
     const tDone = setTimeout(() => setPhase("hidden"), 2500);
     return () => {
+      cancelAnimationFrame(raf);
       clearTimeout(tOut);
       clearTimeout(tDone);
     };
