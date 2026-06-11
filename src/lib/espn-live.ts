@@ -1,17 +1,19 @@
 import type { PrismaClient } from "@prisma/client";
 import { MATCH_STATUS } from "@/lib/constants";
+import { recomputeMatchPoints } from "@/lib/scoring";
 
-// Source live non-officielle (ESPN). football-data, en plan gratuit, NE fournit
-// PAS le score en direct : pendant un match il reste en « TIMED » à 0-0. On enrichit
-// donc uniquement l'AFFICHAGE live (score + minute) des matchs en cours avec le flux
-// public d'ESPN, qui lui est en temps réel.
+// Source live + finalisation via ESPN (non-officiel). football-data en plan gratuit
+// ne fournit pas le score en direct (matchs bloqués en « TIMED » à 0-0) et peut même
+// finaliser un match avec un score FAUX. ESPN, lui, a la donnée temps réel correcte.
+// On l'utilise donc pour :
+//   - le SCORE EN DIRECT des matchs en cours (state "in"),
+//   - la FINALISATION (score final + points) dès qu'ESPN affiche « Full Time »
+//     (state "post"), sans attendre football-data.
 //
-// Garanties de sûreté (best-effort) :
-//  - toute erreur réseau/format est avalée → l'app retombe sur football-data ;
-//  - on n'altère jamais un match déjà « terminé » ;
-//  - on ne fait jamais reculer le score (réponses périmées) ;
-//  - le score DÉFINITIF et le calcul des points restent pilotés par football-data
-//    (passage en « terminé »), jamais par ESPN.
+// 100 % best-effort : toute erreur est avalée → on garde le comportement
+// football-data. Identification du match par la paire de codes FIFA des équipes.
+// Appelé en fin de synchro (après football-data), donc ESPN a le dernier mot sur
+// les matchs qu'il connaît (la journée en cours) et corrige une donnée erronée.
 
 const ESPN_URL =
   "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
@@ -19,6 +21,7 @@ const ESPN_URL =
 type EspnCompetitor = {
   team?: { abbreviation?: string };
   score?: string;
+  winner?: boolean;
 };
 type EspnEvent = {
   status?: { type?: { state?: string }; displayClock?: string };
@@ -34,14 +37,25 @@ function parseClock(clock: string | undefined): number | null {
   return Number.isFinite(n) && n >= 0 && n <= 130 ? n : null;
 }
 
-type LiveScore = {
-  /** Score en cours indexé par code FIFA (ex: { MEX: 1, RSA: 0 }). */
-  byCode: Map<string, number>;
-  minute: number | null;
-};
+type LiveScore = { byCode: Map<string, number>; minute: number | null };
+type FinalScore = { byCode: Map<string, number>; winnerCode: string | null };
 
-/** Récupère les matchs ESPN actuellement EN COURS (state "in"). */
-async function fetchEspnLive(): Promise<LiveScore[]> {
+/** Construit la map code→score pour un événement, ou null si invalide. */
+function scoresByCode(comps: EspnCompetitor[]): Map<string, number> | null {
+  const byCode = new Map<string, number>();
+  for (const c of comps) {
+    const code = c.team?.abbreviation?.toUpperCase();
+    const score = Number(c.score);
+    if (code && Number.isFinite(score)) byCode.set(code, score);
+  }
+  return byCode.size === 2 ? byCode : null;
+}
+
+/** Sépare les matchs ESPN en cours (state "in") et terminés (state "post"). */
+async function fetchEspnEvents(): Promise<{
+  live: LiveScore[];
+  finished: FinalScore[];
+}> {
   const res = await fetch(ESPN_URL, {
     cache: "no-store",
     signal: AbortSignal.timeout(8000),
@@ -49,69 +63,113 @@ async function fetchEspnLive(): Promise<LiveScore[]> {
   if (!res.ok) throw new Error(`ESPN ${res.status}`);
   const data = (await res.json()) as { events?: EspnEvent[] };
 
-  const out: LiveScore[] = [];
+  const live: LiveScore[] = [];
+  const finished: FinalScore[] = [];
   for (const e of data.events ?? []) {
-    // ESPN : status.type.state ∈ { "pre", "in", "post" } → on ne garde que "in".
-    if (e.status?.type?.state !== "in") continue;
+    const state = e.status?.type?.state; // "pre" | "in" | "post"
     const comps = e.competitions?.[0]?.competitors ?? [];
-    const byCode = new Map<string, number>();
-    for (const c of comps) {
-      const code = c.team?.abbreviation?.toUpperCase();
-      const score = Number(c.score);
-      if (code && Number.isFinite(score)) byCode.set(code, score);
+    const byCode = scoresByCode(comps);
+    if (!byCode) continue;
+    if (state === "in") {
+      live.push({ byCode, minute: parseClock(e.status?.displayClock) });
+    } else if (state === "post") {
+      const winnerCode =
+        comps.find((c) => c.winner === true)?.team?.abbreviation?.toUpperCase() ??
+        null;
+      finished.push({ byCode, winnerCode });
     }
-    if (byCode.size !== 2) continue;
-    out.push({ byCode, minute: parseClock(e.status?.displayClock) });
   }
-  return out;
+  return { live, finished };
 }
 
 /**
- * Superpose les scores live d'ESPN sur les matchs en cours (best-effort).
- * Renvoie le nombre de matchs mis à jour. N'altère jamais un match terminé ni
- * ne fait reculer le score. Identifie le match par la paire de codes d'équipe.
+ * Superpose les données ESPN (score live + finalisation) sur les matchs.
+ * Renvoie le nombre de matchs mis à jour. Best-effort, idempotent.
  */
 export async function overlayEspnLiveScores(
   prisma: PrismaClient,
 ): Promise<number> {
-  let live: LiveScore[];
+  let events: { live: LiveScore[]; finished: FinalScore[] };
   try {
-    live = await fetchEspnLive();
+    events = await fetchEspnEvents();
   } catch {
     return 0; // ESPN indisponible : on garde le comportement football-data.
   }
-  if (live.length === 0) return 0;
+  if (events.live.length === 0 && events.finished.length === 0) return 0;
 
-  // Matchs candidats : non terminés, avec deux équipes connues.
+  // Matchs candidats : deux équipes connues (terminés inclus, pour la finalisation).
   const candidates = await prisma.match.findMany({
-    where: {
-      status: { not: MATCH_STATUS.FINISHED },
-      homeTeamId: { not: null },
-      awayTeamId: { not: null },
-    },
+    where: { homeTeamId: { not: null }, awayTeamId: { not: null } },
     include: { homeTeam: true, awayTeam: true },
   });
 
   const now = Date.now();
-  let updated = 0;
-
-  for (const ls of live) {
-    const liveKey = [...ls.byCode.keys()].sort().join("|");
-    const match = candidates.find((mt) => {
+  // Fenêtre de sécurité : coup d'envoi entre -6 h et +30 min.
+  const inWindow = (kickoff: Date) => {
+    const e = now - kickoff.getTime();
+    return e >= -30 * 60 * 1000 && e <= 6 * 60 * 60 * 1000;
+  };
+  const findMatch = (byCode: Map<string, number>) => {
+    const key = [...byCode.keys()].sort().join("|");
+    return candidates.find((mt) => {
       const hc = mt.homeTeam?.code?.toUpperCase();
       const ac = mt.awayTeam?.code?.toUpperCase();
       if (!hc || !ac) return false;
-      return [hc, ac].sort().join("|") === liveKey;
+      return [hc, ac].sort().join("|") === key && inWindow(mt.kickoff);
     });
+  };
+
+  let updated = 0;
+
+  // 1) FINALISATIONS (prioritaires) : ESPN dit « Full Time » → score final + points.
+  for (const f of events.finished) {
+    const match = findMatch(f.byCode);
     if (!match || !match.homeTeam || !match.awayTeam) continue;
+    const hc = match.homeTeam.code.toUpperCase();
+    const ac = match.awayTeam.code.toUpperCase();
+    const home = f.byCode.get(hc);
+    const away = f.byCode.get(ac);
+    if (home == null || away == null) continue;
+    const winnerTeamId =
+      f.winnerCode === hc
+        ? match.homeTeamId
+        : f.winnerCode === ac
+          ? match.awayTeamId
+          : null;
 
-    // Fenêtre de sécurité : coup d'envoi entre -30 min et +4 h (évite d'enrichir
-    // un match sans rapport si jamais une paire de codes coïncidait).
-    const elapsed = now - match.kickoff.getTime();
-    if (elapsed < -30 * 60 * 1000 || elapsed > 4 * 60 * 60 * 1000) continue;
+    // Déjà finalisé avec le même score → rien à faire (évite un recalcul inutile).
+    if (
+      match.status === MATCH_STATUS.FINISHED &&
+      match.homeScore === home &&
+      match.awayScore === away
+    ) {
+      continue;
+    }
 
-    const home = ls.byCode.get(match.homeTeam.code.toUpperCase());
-    const away = ls.byCode.get(match.awayTeam.code.toUpperCase());
+    await prisma.match.update({
+      where: { id: match.id },
+      data: {
+        status: MATCH_STATUS.FINISHED,
+        homeScore: home,
+        awayScore: away,
+        liveMinute: null,
+        winnerTeamId,
+      },
+    });
+    await recomputeMatchPoints(match.id);
+    updated++;
+  }
+
+  // 2) SCORE EN DIRECT des matchs en cours (non encore finalisés).
+  for (const ls of events.live) {
+    const match = findMatch(ls.byCode);
+    if (!match || !match.homeTeam || !match.awayTeam) continue;
+    if (match.status === MATCH_STATUS.FINISHED) continue; // déjà terminé
+
+    const hc = match.homeTeam.code.toUpperCase();
+    const ac = match.awayTeam.code.toUpperCase();
+    const home = ls.byCode.get(hc);
+    const away = ls.byCode.get(ac);
     if (home == null || away == null) continue;
 
     // Anti-régression : ne jamais faire baisser le score total déjà enregistré.
@@ -119,7 +177,7 @@ export async function overlayEspnLiveScores(
     const oldTotal = (match.homeScore ?? 0) + (match.awayScore ?? 0);
     if (newTotal < oldTotal) continue;
 
-    // Rien à écrire si tout est déjà identique (évite des écritures inutiles).
+    // Rien à écrire si tout est déjà identique.
     if (
       match.homeScore === home &&
       match.awayScore === away &&

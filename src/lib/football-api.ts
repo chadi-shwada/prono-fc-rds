@@ -213,6 +213,20 @@ async function runSync(): Promise<SyncResult> {
       }
     }
 
+    // Ne jamais « dé-finaliser » un match déjà terminé (finalisé par ESPN ou par
+    // l'admin) tant que football-data n'est pas lui-même passé en « terminé » :
+    // football-data gratuit, lent et parfois faux, ne doit pas le ramener « en
+    // direct » ni écraser le score final correct.
+    if (
+      existing?.status === MATCH_STATUS.FINISHED &&
+      status !== MATCH_STATUS.FINISHED
+    ) {
+      status = MATCH_STATUS.FINISHED;
+      homeScore = existing.homeScore;
+      awayScore = existing.awayScore;
+      winnerTeamId = existing.winnerTeamId;
+    }
+
     const fields = {
       stage: STAGE_MAP[m.stage] ?? STAGES.GROUP,
       groupName: parseGroup(m.group),
