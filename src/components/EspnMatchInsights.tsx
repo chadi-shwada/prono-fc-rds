@@ -57,10 +57,15 @@ export default async function EspnMatchInsights({
                 <span
                   className="h-2 w-2 shrink-0 rounded-full"
                   style={{
-                    background: g.team ? teamColor(g.team) : "rgb(148 163 184)",
+                    background: g.teamCode
+                      ? teamColor(g.teamCode)
+                      : "rgb(148 163 184)",
                   }}
                 />
-                <span className="min-w-0 truncate text-slate-200">{g.text}</span>
+                <span className="min-w-0 truncate text-slate-200">
+                  {g.scorer}
+                  {g.note ? ` (${g.note})` : ""}
+                </span>
               </li>
             ))}
           </ul>

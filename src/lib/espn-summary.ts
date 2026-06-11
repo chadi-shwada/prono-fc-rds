@@ -46,7 +46,12 @@ type Summary = {
   boxscore?: { teams?: BoxTeam[] };
 };
 
-export type EspnGoal = { minute: string | null; team: string | null; text: string };
+export type EspnGoal = {
+  minute: string | null;
+  teamCode: string | null;
+  scorer: string;
+  note: string | null; // "pén." | "csc" | null
+};
 export type EspnStat = { label: string; home: string; away: string };
 export type EspnMatchDetail = {
   statusDetail: string | null;
@@ -80,6 +85,15 @@ async function fetchJson(url: string): Promise<unknown | null> {
 }
 
 const up = (s: string | undefined) => (s ?? "").toUpperCase();
+
+// Extrait le nom du buteur depuis le texte anglais d'ESPN, ex. :
+// "Goal! Mexico 1, South Africa 0. Julián Quiñones (Mexico) right footed shot…"
+// → "Julián Quiñones". Sert de repli si athletesInvolved est absent.
+function scorerFromText(text: string): string | null {
+  const afterScore = text.split(/\.\s+/).slice(1).join(". ");
+  const m = afterScore.match(/^([^(]+?)\s*\(/);
+  return m ? m[1].trim() : null;
+}
 
 /**
  * Récupère les détails ESPN d'un match identifié par la paire de codes FIFA.
@@ -129,15 +143,22 @@ export async function getEspnMatchDetail(
     .filter(
       (ev) => ev.scoringPlay === true || /goal/i.test(ev.type?.text ?? ""),
     )
-    .map((ev) => ({
-      minute: ev.clock?.displayValue ?? null,
-      team: ev.team?.abbreviation ?? ev.team?.displayName ?? null,
-      text:
-        ev.text ??
-        ev.shortText ??
-        ev.athletesInvolved?.[0]?.displayName ??
-        "But",
-    }));
+    .map((ev) => {
+      const raw = ev.text ?? ev.shortText ?? "";
+      const typeText = ev.type?.text ?? "";
+      const isOwn = /own goal/i.test(typeText) || /own goal/i.test(raw);
+      const isPen = /penalt/i.test(typeText) || /penalt/i.test(raw);
+      const scorer =
+        ev.athletesInvolved?.[0]?.displayName?.trim() ||
+        scorerFromText(raw) ||
+        "But";
+      return {
+        minute: ev.clock?.displayValue ?? null,
+        teamCode: ev.team?.abbreviation?.toUpperCase() ?? null,
+        scorer,
+        note: isOwn ? "csc" : isPen ? "pén." : null,
+      };
+    });
 
   // Stats : on relie chaque équipe du boxscore à domicile/extérieur par son code.
   const teams = summary.boxscore?.teams ?? [];
