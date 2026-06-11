@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { recomputeMatchPoints } from "@/lib/scoring";
 import { teamNameFr } from "@/lib/teamNames";
 import { importVenues } from "@/lib/venues";
+import { overlayEspnLiveScores } from "@/lib/espn-live";
 import { STAGES, MATCH_STATUS } from "@/lib/constants";
 
 // Intégration football-data.org (v4) — compétition "WC" (Coupe du Monde).
@@ -77,6 +78,8 @@ export type SyncResult = {
   teams: number;
   matches: number;
   finishedRecomputed: number;
+  /** Nombre de matchs dont le score live a été enrichi via ESPN. */
+  espnLive: number;
 };
 
 /**
@@ -237,9 +240,14 @@ async function runSync(): Promise<SyncResult> {
   // Rattache automatiquement chaque match à sa ville hôte (calendrier officiel).
   await importVenues(prisma);
 
+  // Enrichit le score live depuis ESPN (football-data gratuit ne le fournit pas).
+  // Best-effort : en cas d'échec, on garde les données football-data.
+  const espnLive = await overlayEspnLiveScores(prisma);
+
   return {
     teams: uniqueTeams.size,
     matches: matches.length,
     finishedRecomputed: recomputed,
+    espnLive,
   };
 }
