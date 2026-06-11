@@ -56,12 +56,16 @@ export default async function HomePage() {
   const showChampionNudge = championOpen && !myChampion;
 
   // Salutation selon l'heure de Paris (le serveur tourne en UTC).
+  // formatToParts pour isoler la valeur numérique : en fr-FR, format() renvoie
+  // « 09 h » → Number() donnerait NaN (et tomberait toujours sur « Bonsoir »).
   const hour = Number(
     new Intl.DateTimeFormat("fr-FR", {
-      hour: "numeric",
+      hour: "2-digit",
       hour12: false,
       timeZone: "Europe/Paris",
-    }).format(new Date()),
+    })
+      .formatToParts(new Date())
+      .find((p) => p.type === "hour")?.value ?? "12",
   );
   const greeting = hour < 6 ? "Bonsoir" : hour < 13 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
 
