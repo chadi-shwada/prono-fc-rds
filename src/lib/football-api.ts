@@ -10,6 +10,13 @@ import { STAGES, MATCH_STATUS } from "@/lib/constants";
 
 const BASE = "https://api.football-data.org/v4";
 
+// Anti-flapping de l'API gratuite : pendant un match, football-data (plan gratuit)
+// renvoie par à-coups un statut « programmé » alors que le match est en cours, ce
+// qui faisait disparaître/réapparaître le badge « En direct ». Tant que le coup
+// d'envoi est passé et que l'API n'a pas (encore) marqué le match « terminé », on
+// le considère en direct, dans une fenêtre généreuse couvrant prolongation + T.A.B.
+const LIVE_WINDOW_MS = 180 * 60 * 1000; // 3 h après le coup d'envoi
+
 const STAGE_MAP: Record<string, string> = {
   GROUP_STAGE: STAGES.GROUP,
   LAST_32: STAGES.R32,
@@ -163,7 +170,16 @@ async function runSync(): Promise<SyncResult> {
     const homeId = localId(m.homeTeam);
     const awayId = localId(m.awayTeam);
 
-    const status = mapStatus(m.status);
+    const kickoff = new Date(m.utcDate);
+    let status = mapStatus(m.status);
+    // Si le match a commencé et que l'API ne le dit pas (encore) terminé, on force
+    // « En direct » pour stabiliser le badge malgré le flapping de l'API gratuite.
+    if (status === MATCH_STATUS.SCHEDULED) {
+      const elapsed = Date.now() - kickoff.getTime();
+      if (elapsed >= 0 && elapsed < LIVE_WINDOW_MS) {
+        status = MATCH_STATUS.LIVE;
+      }
+    }
     const liveMinute = parseMinute(m, status);
     // Vainqueur du match (T.A.B. inclus) d'après l'API.
     const winnerTeamId =
@@ -175,7 +191,7 @@ async function runSync(): Promise<SyncResult> {
     const fields = {
       stage: STAGE_MAP[m.stage] ?? STAGES.GROUP,
       groupName: parseGroup(m.group),
-      kickoff: new Date(m.utcDate),
+      kickoff,
       status,
       liveMinute,
       homeTeamId: homeId,
