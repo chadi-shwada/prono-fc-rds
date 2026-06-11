@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -10,6 +11,8 @@ import Flag from "@/components/Flag";
 import LiveBadge from "@/components/LiveBadge";
 import LiveScore from "@/components/LiveScore";
 import LiveRefresher from "@/components/LiveRefresher";
+import EspnMatchInsights from "@/components/EspnMatchInsights";
+import EspnInsightsSkeleton from "@/components/EspnInsightsSkeleton";
 import Avatar from "@/components/Avatar";
 import Reactions from "@/components/Reactions";
 
@@ -49,6 +52,14 @@ export default async function MatchDetailPage({
     match.status === MATCH_STATUS.FINISHED &&
     match.homeScore !== null &&
     match.awayScore !== null;
+
+  // Détails ESPN (buteurs / stats / T.A.B.) : uniquement pour un match en cours ou
+  // récemment terminé (ESPN ne sert que la journée en cours). Auto-masqué sinon.
+  const recent =
+    match.kickoff <= now &&
+    now.getTime() - match.kickoff.getTime() < 24 * 60 * 60 * 1000;
+  const showInsights =
+    (live || finished) && recent && !!match.homeTeam && !!match.awayTeam;
 
   const isExact = (p: { homeScore: number; awayScore: number }) =>
     finished &&
@@ -141,6 +152,18 @@ export default async function MatchDetailPage({
           </div>
         </div>
       </Reveal>
+
+      {/* Détails du match via ESPN (buteurs, stats, T.A.B.) — streamés, auto-masqués */}
+      {showInsights && match.homeTeam && match.awayTeam && (
+        <Reveal delay={0.06}>
+          <Suspense fallback={<EspnInsightsSkeleton />}>
+            <EspnMatchInsights
+              homeCode={match.homeTeam.code}
+              awayCode={match.awayTeam.code}
+            />
+          </Suspense>
+        </Reveal>
+      )}
 
       {/* Réactions (chambrage) */}
       <Reveal delay={0.07}>
