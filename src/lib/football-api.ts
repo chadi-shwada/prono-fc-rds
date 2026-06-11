@@ -182,12 +182,34 @@ async function runSync(): Promise<SyncResult> {
     }
     const liveMinute = parseMinute(m, status);
     // Vainqueur du match (T.A.B. inclus) d'après l'API.
-    const winnerTeamId =
+    let winnerTeamId =
       m.score.winner === "HOME_TEAM"
         ? homeId
         : m.score.winner === "AWAY_TEAM"
           ? awayId
           : null;
+    let homeScore = m.score.fullTime.home;
+    let awayScore = m.score.fullTime.away;
+
+    const existing = await prisma.match.findUnique({
+      where: { externalId: String(m.id) },
+    });
+
+    // Anti-régression du score en direct : l'API gratuite renvoie par moments une
+    // réponse périmée (ex. 0-0 alors qu'un but a déjà été marqué), ce qui faisait
+    // « reculer » le score affiché. Tant que le match est en direct, on ne laisse
+    // jamais le score total diminuer : on conserve la version la plus avancée déjà
+    // enregistrée. Le score définitif (statut « terminé ») reste pris tel quel.
+    if (status === MATCH_STATUS.LIVE && existing) {
+      const newTotal = (homeScore ?? 0) + (awayScore ?? 0);
+      const oldTotal = (existing.homeScore ?? 0) + (existing.awayScore ?? 0);
+      if (newTotal < oldTotal) {
+        homeScore = existing.homeScore;
+        awayScore = existing.awayScore;
+        winnerTeamId = existing.winnerTeamId;
+      }
+    }
+
     const fields = {
       stage: STAGE_MAP[m.stage] ?? STAGES.GROUP,
       groupName: parseGroup(m.group),
@@ -196,8 +218,8 @@ async function runSync(): Promise<SyncResult> {
       liveMinute,
       homeTeamId: homeId,
       awayTeamId: awayId,
-      homeScore: m.score.fullTime.home,
-      awayScore: m.score.fullTime.away,
+      homeScore,
+      awayScore,
       winnerTeamId,
     };
     const saved = await prisma.match.upsert({
