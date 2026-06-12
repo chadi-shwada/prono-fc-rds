@@ -3,14 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { parseScore } from "@/lib/parse";
 
 export type PredState = { ok?: boolean; error?: string } | undefined;
-
-function parseScore(v: FormDataEntryValue | null): number | null {
-  const n = Number((v ?? "").toString().trim());
-  if (!Number.isInteger(n) || n < 0 || n > 99) return null;
-  return n;
-}
 
 /** Enregistre/modifie le pronostic d'un match (verrouillé au coup d'envoi). */
 export async function savePredictionAction(

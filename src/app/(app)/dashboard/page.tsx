@@ -31,7 +31,14 @@ export default async function HomePage() {
         where: { kickoff: { gt: new Date() } },
         orderBy: { kickoff: "asc" },
         take: 4,
-        include: { homeTeam: true, awayTeam: true },
+        include: {
+          homeTeam: true,
+          awayTeam: true,
+          predictions: {
+            where: { userId: user.id },
+            select: { matchId: true, homeScore: true, awayScore: true },
+          },
+        },
       }),
       prisma.match.findFirst({ orderBy: { kickoff: "asc" } }),
       prisma.match.findMany({
@@ -43,13 +50,9 @@ export default async function HomePage() {
       prisma.championPrediction.findUnique({ where: { userId: user.id } }),
     ]);
 
-  // Mes pronos sur les prochains matchs affichés → état « fait / à faire »
-  // visible d'un coup d'œil, sans aller sur /matchs.
-  const myUpcomingPreds = await prisma.prediction.findMany({
-    where: { userId: user.id, matchId: { in: upcoming.map((m) => m.id) } },
-    select: { matchId: true, homeScore: true, awayScore: true },
-  });
-  const predByMatch = new Map(myUpcomingPreds.map((p) => [p.matchId, p]));
+  const predByMatch = new Map(
+    upcoming.flatMap((m) => m.predictions.map((p) => [m.id, p])),
+  );
 
   // Rappel champion : seulement tant que le tournoi n'a pas commencé.
   const championOpen = !!firstMatch && firstMatch.kickoff > new Date();

@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { recomputeMatchPoints, recomputeChampionBonus } from "@/lib/scoring";
 import { syncFromFootballData } from "@/lib/football-api";
 import { MATCH_STATUS } from "@/lib/constants";
+import { parseScore, parseMinute } from "@/lib/parse";
 
 export type AdminState = { ok?: boolean; error?: string } | undefined;
 
@@ -15,26 +16,11 @@ async function requireAdmin() {
   return user;
 }
 
-function parseScore(v: FormDataEntryValue | null): number | null {
-  const s = (v ?? "").toString().trim();
-  if (s === "") return null;
-  const n = Number(s);
-  return Number.isInteger(n) && n >= 0 && n <= 99 ? n : null;
-}
-
 const VALID_STATUSES = [
   MATCH_STATUS.SCHEDULED,
   MATCH_STATUS.LIVE,
   MATCH_STATUS.FINISHED,
 ] as const;
-
-/** Minute de jeu (0-130), ou null si vide/invalide. */
-function parseMinute(v: FormDataEntryValue | null): number | null {
-  const s = (v ?? "").toString().trim();
-  if (s === "") return null;
-  const n = Number(s);
-  return Number.isInteger(n) && n >= 0 && n <= 130 ? n : null;
-}
 
 /** Saisie/correction manuelle du statut + résultat d'un match + recalcul des points. */
 export async function setResultAction(
@@ -133,7 +119,7 @@ export async function resetMatchPredictionsAction(
 export async function deleteUserAction(userId: string): Promise<void> {
   const me = await requireAdmin();
   if (!userId || userId === me.id) return; // jamais soi-même
-  await prisma.user.delete({ where: { id: userId } }).catch(() => {});
+  await prisma.user.delete({ where: { id: userId } });
   revalidatePath("/admin");
   revalidatePath("/classement");
 }
