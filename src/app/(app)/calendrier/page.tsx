@@ -71,6 +71,7 @@ type MatchWithTeams = {
   homeScore: number | null;
   awayScore: number | null;
   liveMinute: number | null;
+  liveClock: string | null;
   homeTeam: { name: string; code: string | null } | null;
   awayTeam: { name: string; code: string | null } | null;
 };
@@ -138,7 +139,7 @@ function MatchRow({ match: m }: { match: MatchWithTeams }) {
       </span>
 
         <span className="hidden w-28 shrink-0 justify-end text-right text-[11px] text-slate-500 sm:flex">
-          {live ? <LiveBadge minute={m.liveMinute} /> : stageBadge}
+          {live ? <LiveBadge minute={m.liveMinute} clock={m.liveClock} /> : stageBadge}
         </span>
       </Link>
     </li>

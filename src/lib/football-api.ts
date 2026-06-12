@@ -233,6 +233,9 @@ async function runSync(): Promise<SyncResult> {
       kickoff,
       status,
       liveMinute,
+      // football-data ne fournit pas le temps additionnel : on met la minute
+      // entière (l'overlay ESPN, exécuté juste après, l'enrichit en "90+4").
+      liveClock: liveMinute != null ? String(liveMinute) : null,
       homeTeamId: homeId,
       awayTeamId: awayId,
       homeScore,

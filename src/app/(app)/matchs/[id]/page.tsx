@@ -115,7 +115,7 @@ export default async function MatchDetailPage({
               {match.groupName ? ` · Groupe ${match.groupName}` : ""}
             </span>
             <span className="justify-self-center">
-              {live && <LiveBadge minute={match.liveMinute} />}
+              {live && <LiveBadge minute={match.liveMinute} clock={match.liveClock} />}
             </span>
             <span className="min-w-0 justify-self-end truncate whitespace-nowrap">
               {formatKickoff(match.kickoff)}

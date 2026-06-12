@@ -101,6 +101,10 @@ model Match {
   // Minute de jeu affichée pendant un match LIVE (ex: 45). null si inconnu.
   liveMinute Int?
 
+  // Horloge de jeu affichée, temps additionnel inclus (ex: "90+4"). Plus riche
+  // que liveMinute (entier) pour la pastille « En direct ». null si inconnue.
+  liveClock String?
+
   // Vainqueur du match (id d'équipe), y compris aux T.A.B. quand le score est nul
   // après prolongation. Renseigné par l'API (score.winner) ou par l'admin.
   // Sert notamment au bonus vainqueur final (finale gagnée aux tirs au but).

@@ -37,7 +37,21 @@ function parseClock(clock: string | undefined): number | null {
   return Number.isFinite(n) && n >= 0 && n <= 130 ? n : null;
 }
 
-type LiveScore = { byCode: Map<string, number>; minute: number | null };
+/** Horloge propre, temps additionnel inclus : "90'+4'" → "90+4", sinon null. */
+function parseClockText(clock: string | undefined): string | null {
+  if (!clock) return null;
+  const m = clock.match(/(\d+)(?:\s*\+\s*(\d+))?/);
+  if (!m) return null;
+  const base = Number(m[1]);
+  if (!Number.isFinite(base) || base < 0 || base > 130) return null;
+  return m[2] ? `${base}+${Number(m[2])}` : `${base}`;
+}
+
+type LiveScore = {
+  byCode: Map<string, number>;
+  minute: number | null;
+  clock: string | null;
+};
 type FinalScore = { byCode: Map<string, number>; winnerCode: string | null };
 
 /** Construit la map code→score pour un événement, ou null si invalide. */
@@ -71,7 +85,11 @@ async function fetchEspnEvents(): Promise<{
     const byCode = scoresByCode(comps);
     if (!byCode) continue;
     if (state === "in") {
-      live.push({ byCode, minute: parseClock(e.status?.displayClock) });
+      live.push({
+        byCode,
+        minute: parseClock(e.status?.displayClock),
+        clock: parseClockText(e.status?.displayClock),
+      });
     } else if (state === "post") {
       const winnerCode =
         comps.find((c) => c.winner === true)?.team?.abbreviation?.toUpperCase() ??
@@ -153,6 +171,7 @@ export async function overlayEspnLiveScores(
         homeScore: home,
         awayScore: away,
         liveMinute: null,
+        liveClock: null,
         winnerTeamId,
       },
     });
@@ -182,7 +201,8 @@ export async function overlayEspnLiveScores(
       match.homeScore === home &&
       match.awayScore === away &&
       match.status === MATCH_STATUS.LIVE &&
-      match.liveMinute === ls.minute
+      match.liveMinute === ls.minute &&
+      match.liveClock === ls.clock
     ) {
       continue;
     }
@@ -194,6 +214,7 @@ export async function overlayEspnLiveScores(
         awayScore: away,
         status: MATCH_STATUS.LIVE,
         liveMinute: ls.minute,
+        liveClock: ls.clock,
       },
     });
     updated++;

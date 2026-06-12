@@ -214,9 +214,9 @@ export default async function HomePage() {
                         away={m.awayScore}
                         className="text-sm"
                       />
-                      {m.liveMinute != null && (
+                      {(m.liveClock ?? m.liveMinute) != null && (
                         <span className="font-display text-xs tabular-nums text-red-300">
-                          {m.liveMinute}&apos;
+                          {m.liveClock ?? m.liveMinute}&apos;
                         </span>
                       )}
                     </span>

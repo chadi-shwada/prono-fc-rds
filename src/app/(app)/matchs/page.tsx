@@ -239,7 +239,7 @@ export default async function MatchsPage({
                       </span>
                       <span className="justify-self-center">
                         {m.status === MATCH_STATUS.LIVE && (
-                          <LiveBadge minute={m.liveMinute} />
+                          <LiveBadge minute={m.liveMinute} clock={m.liveClock} />
                         )}
                       </span>
                       <span className="justify-self-end whitespace-nowrap font-semibold text-slate-300">
