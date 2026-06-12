@@ -26,8 +26,9 @@ export default async function EspnMatchInsights({
 }) {
   const d = await getEspnMatchDetail(homeCode, awayCode, kickoff);
   if (!d) return null;
-  const { timeline, stats, shootout } = d;
-  if (timeline.length === 0 && stats.length === 0 && !shootout) return null;
+  const { timeline, stats, shootout, predictor } = d;
+  if (timeline.length === 0 && stats.length === 0 && !shootout && !predictor)
+    return null;
 
   const icon = { goal: "⚽", yellow: "🟨", red: "🟥", sub: "🔄" } as const;
   const eventLabel = (e: (typeof timeline)[number]) => {
@@ -46,6 +47,53 @@ export default async function EspnMatchInsights({
           <div className="font-display text-xl font-extrabold text-white">
             {shootout.home} <span className="text-slate-500">-</span>{" "}
             {shootout.away}
+          </div>
+        </div>
+      )}
+
+      {/* Pronostic ESPN : % de victoire de chaque camp (et match nul) */}
+      {predictor && (
+        <div className="glass rounded-2xl p-4">
+          <div className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Pronostic ESPN 🔮
+          </div>
+          <div className="flex h-3 overflow-hidden rounded-full bg-white/10">
+            {predictor.home > 0 && (
+              <div
+                style={{
+                  width: `${predictor.home}%`,
+                  background: teamColor(homeCode),
+                }}
+              />
+            )}
+            {predictor.draw > 0 && (
+              <div className="bg-slate-500" style={{ width: `${predictor.draw}%` }} />
+            )}
+            {predictor.away > 0 && (
+              <div
+                style={{
+                  width: `${predictor.away}%`,
+                  background: teamColor(awayCode),
+                }}
+              />
+            )}
+          </div>
+          <div className="mt-2 flex items-center justify-between gap-2 text-xs">
+            <span className="flex items-center gap-1.5">
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ background: teamColor(homeCode) }}
+              />
+              <span className="font-bold text-white">{predictor.home}%</span>
+            </span>
+            <span className="shrink-0 text-slate-400">Nul {predictor.draw}%</span>
+            <span className="flex items-center justify-end gap-1.5">
+              <span className="font-bold text-white">{predictor.away}%</span>
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ background: teamColor(awayCode) }}
+              />
+            </span>
           </div>
         </div>
       )}

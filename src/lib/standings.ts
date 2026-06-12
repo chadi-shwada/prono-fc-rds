@@ -126,3 +126,27 @@ export function computeGroupStandings(
   result.sort((a, b) => a.group.localeCompare(b.group));
   return result;
 }
+
+export type ThirdPlaceRow = StandingRow & { group: string };
+
+/**
+ * Classement des troisièmes de chaque groupe (format à 48 équipes : les 8
+ * meilleurs 3es se qualifient). Mêmes départages que les groupes : points,
+ * différence de buts, buts marqués, puis nom.
+ */
+export function rankThirdPlaced(standings: GroupStanding[]): ThirdPlaceRow[] {
+  const thirds = standings
+    .filter((g) => g.rows.length >= 3)
+    .map((g) => ({ ...g.rows[2], group: g.group }));
+  thirds.sort(
+    (a, b) =>
+      b.points - a.points ||
+      b.gd - a.gd ||
+      b.gf - a.gf ||
+      a.name.localeCompare(b.name),
+  );
+  return thirds;
+}
+
+/** Nombre de meilleurs troisièmes qualifiés (format à 48 équipes). */
+export const BEST_THIRDS_QUALIFY = 8;

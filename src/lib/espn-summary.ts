@@ -37,6 +37,12 @@ type KeyEvent = {
 };
 type StatItem = { name?: string; displayValue?: string };
 type BoxTeam = { team?: TeamRef; statistics?: StatItem[] };
+type PredictorSide = {
+  id?: string | number;
+  team?: TeamRef;
+  gameProjection?: string | number; // % de victoire estimé
+  teamChanceTie?: string | number; // % de match nul
+};
 type Summary = {
   header?: {
     competitions?: { status?: { type?: StatusType }; competitors?: Competitor[] }[];
@@ -44,6 +50,7 @@ type Summary = {
   keyEvents?: KeyEvent[];
   scoringPlays?: KeyEvent[];
   boxscore?: { teams?: BoxTeam[] };
+  predictor?: { homeTeam?: PredictorSide; awayTeam?: PredictorSide };
 };
 
 // Fil du match : buts, cartons et remplacements, dans l'ordre chronologique.
@@ -57,11 +64,14 @@ export type EspnTimelineEvent = {
   sub: string | null; // but : "pén."/"csc" · remplacement : joueur sortant
 };
 export type EspnStat = { label: string; home: string; away: string };
+// Pronostic ESPN (% de victoire / nul), du point de vue domicile/extérieur.
+export type EspnPredictor = { home: number; draw: number; away: number };
 export type EspnMatchDetail = {
   statusDetail: string | null;
   timeline: EspnTimelineEvent[];
   stats: EspnStat[];
   shootout: { home: number; away: number } | null;
+  predictor: EspnPredictor | null;
 };
 
 // Stats à afficher (nom ESPN → libellé FR), dans l'ordre.
@@ -296,5 +306,48 @@ export async function getEspnMatchDetail(
       ? { home: sHome, away: sAway }
       : null;
 
-  return { statusDetail, timeline, stats, shootout };
+  // Pronostic ESPN : % de victoire de chaque camp (+ nul). On rattache chaque
+  // côté à domicile/extérieur par le code de l'équipe (l'ordre ESPN peut différer).
+  const sideCode = (s: PredictorSide | undefined): string | null => {
+    if (!s) return null;
+    if (s.id != null) {
+      const c = idToCode.get(String(s.id));
+      if (c) return c;
+    }
+    if (s.team?.abbreviation) return s.team.abbreviation.toUpperCase();
+    if (s.team?.displayName) {
+      const c = nameToCode.get(s.team.displayName.toLowerCase());
+      if (c) return c;
+    }
+    return null;
+  };
+  let predictor: EspnPredictor | null = null;
+  const pr = summary.predictor;
+  if (pr) {
+    let homeWin: number | null = null;
+    let awayWin: number | null = null;
+    let tie: number | null = null;
+    for (const s of [pr.homeTeam, pr.awayTeam]) {
+      const win = Number(s?.gameProjection);
+      const t = Number(s?.teamChanceTie);
+      if (Number.isFinite(t)) tie = t;
+      if (!Number.isFinite(win)) continue;
+      const code = sideCode(s);
+      if (code === hc) homeWin = win;
+      else if (code === ac) awayWin = win;
+    }
+    if (homeWin != null && awayWin != null) {
+      const draw =
+        tie != null && Number.isFinite(tie)
+          ? tie
+          : Math.max(0, 100 - homeWin - awayWin);
+      predictor = {
+        home: Math.round(homeWin),
+        draw: Math.round(draw),
+        away: Math.round(awayWin),
+      };
+    }
+  }
+
+  return { statusDetail, timeline, stats, shootout, predictor };
 }
