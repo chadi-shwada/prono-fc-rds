@@ -44,7 +44,10 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository }}:latest
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # ignore-error : le backend de cache GHA échoue parfois ("error writing
+          # layer blob: not_found"). L'image est déjà poussée sur GHCR — un cache
+          # qui rate ne doit pas faire échouer le déploiement.
+          cache-to: type=gha,mode=max,ignore-error=true
 
       # --- Déploiement vers le VPS ---
       - name: Préparer la clé SSH
