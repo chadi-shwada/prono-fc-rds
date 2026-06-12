@@ -95,15 +95,21 @@ services:
     volumes:
       - app-data:/data
       - ./backups:/backups
-    command: >
-      sh -c "apk add --no-cache sqlite >/dev/null 2>&1;
-      while true; do
-        ts=$$(date +%F);
-        sqlite3 /data/prod.db \".backup '/backups/prod-$$ts.db'\"
-          && echo \"backup OK: prod-$$ts.db\";
-        ls -1t /backups/prod-*.db 2>/dev/null | tail -n +8 | xargs -r rm;
-        sleep 86400;
-      done"
+    # Bloc littéral (|) : les sauts de ligne sont conservés tels quels et chaque
+    # ligne est une commande à part entière. Le « && » reste sur la même ligne que
+    # sqlite3 (un « && » en début de ligne = erreur de syntaxe sh). « $$ » = « $ »
+    # côté conteneur (échappe l'interpolation docker-compose).
+    command:
+      - sh
+      - -c
+      - |
+        apk add --no-cache sqlite >/dev/null 2>&1
+        while true; do
+          ts=$$(date +%F)
+          sqlite3 /data/prod.db ".backup '/backups/prod-$$ts.db'" && echo "backup OK: prod-$$ts.db"
+          ls -1t /backups/prod-*.db 2>/dev/null | tail -n +8 | xargs -r rm
+          sleep 86400
+        done
     depends_on:
       - app
 
