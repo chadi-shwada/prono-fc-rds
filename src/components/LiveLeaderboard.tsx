@@ -74,7 +74,7 @@ export default function LiveLeaderboard({
             }}
           >
             <div
-              className={`relative overflow-hidden rounded-2xl border px-4 py-3.5 ${
+              className={`relative rounded-2xl border px-4 py-3.5 ${
                 i === 0
                   ? "glow-gold border-amber-300/40 bg-amber-300/[0.07]"
                   : me
@@ -84,7 +84,10 @@ export default function LiveLeaderboard({
                       : "border-white/10 bg-white/5"
               }`}
             >
-              <AnimatedBar width={width} delay={Math.min(i * 0.05, 0.5)} />
+              {/* Barre de points clipée aux coins arrondis, sans couper les tooltips */}
+              <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+                <AnimatedBar width={width} delay={Math.min(i * 0.05, 0.5)} />
+              </div>
               <div className="relative flex items-center gap-3">
                 <span
                   className={`w-9 text-center font-display text-xl font-extrabold ${
