@@ -18,7 +18,10 @@ export default function LiveBadge({
       </span>
       En direct
       {label != null && (
-        <span className="font-display tabular-nums text-red-200">{`· ${label}'`}</span>
+        <>
+          <span aria-hidden className="text-red-200/70">·</span>
+          <span className="font-display tabular-nums text-red-200">{label}&apos;</span>
+        </>
       )}
     </span>
   );
