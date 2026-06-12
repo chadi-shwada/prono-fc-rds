@@ -26,8 +26,14 @@ export default async function EspnMatchInsights({
 }) {
   const d = await getEspnMatchDetail(homeCode, awayCode, kickoff);
   if (!d) return null;
-  const { goals, stats, shootout } = d;
-  if (goals.length === 0 && stats.length === 0 && !shootout) return null;
+  const { timeline, stats, shootout } = d;
+  if (timeline.length === 0 && stats.length === 0 && !shootout) return null;
+
+  const icon = { goal: "⚽", yellow: "🟨", red: "🟥", sub: "🔄" } as const;
+  const eventLabel = (e: (typeof timeline)[number]) => {
+    if (e.kind === "sub") return e.sub ? `${e.text} ↔ ${e.sub}` : e.text;
+    return e.sub ? `${e.text} (${e.sub})` : e.text;
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -44,30 +50,26 @@ export default async function EspnMatchInsights({
         </div>
       )}
 
-      {/* Buteurs : chaque but du côté de l'équipe qui l'a marqué (dom. à gauche) */}
-      {goals.length > 0 && (
+      {/* Fil du match : buts, cartons, remplacements (dom. à gauche, ext. à droite) */}
+      {timeline.length > 0 && (
         <div className="glass rounded-2xl p-4">
           <div className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Buts ⚽
+            Fil du match
           </div>
           <ul className="flex flex-col gap-2 text-sm">
-            {goals.map((g, i) => {
+            {timeline.map((e, i) => {
               const isHome =
-                (g.teamCode ?? "").toUpperCase() === homeCode.toUpperCase();
-              const label = `${g.scorer}${g.note ? ` (${g.note})` : ""}`;
-              const dot = (
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{
-                    background: g.teamCode
-                      ? teamColor(g.teamCode)
-                      : "rgb(148 163 184)",
-                  }}
-                />
+                (e.teamCode ?? "").toUpperCase() === homeCode.toUpperCase();
+              const label = eventLabel(e);
+              const muted = e.kind === "sub";
+              const emoji = (
+                <span className="shrink-0 text-xs leading-none" aria-hidden>
+                  {icon[e.kind]}
+                </span>
               );
               const min = (
                 <span className="shrink-0 font-display font-bold tabular-nums text-emerald-300">
-                  {g.minute ?? ""}
+                  {e.minute ?? ""}
                 </span>
               );
               return (
@@ -77,8 +79,10 @@ export default async function EspnMatchInsights({
                     {isHome && (
                       <>
                         {min}
-                        {dot}
-                        <span className="min-w-0 truncate text-slate-200">
+                        {emoji}
+                        <span
+                          className={`min-w-0 truncate ${muted ? "text-slate-400" : "text-slate-200"}`}
+                        >
                           {label}
                         </span>
                       </>
@@ -88,10 +92,12 @@ export default async function EspnMatchInsights({
                   <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
                     {!isHome && (
                       <>
-                        <span className="min-w-0 truncate text-right text-slate-200">
+                        <span
+                          className={`min-w-0 truncate text-right ${muted ? "text-slate-400" : "text-slate-200"}`}
+                        >
                           {label}
                         </span>
-                        {dot}
+                        {emoji}
                         {min}
                       </>
                     )}

@@ -46,16 +46,20 @@ type Summary = {
   boxscore?: { teams?: BoxTeam[] };
 };
 
-export type EspnGoal = {
+// Fil du match : buts, cartons et remplacements, dans l'ordre chronologique.
+export type EspnEventKind = "goal" | "yellow" | "red" | "sub";
+export type EspnTimelineEvent = {
+  kind: EspnEventKind;
   minute: string | null;
+  sort: number; // clé de tri (minute + temps additionnel)
   teamCode: string | null;
-  scorer: string;
-  note: string | null; // "pén." | "csc" | null
+  text: string; // buteur / joueur averti / joueur entrant
+  sub: string | null; // but : "pén."/"csc" · remplacement : joueur sortant
 };
 export type EspnStat = { label: string; home: string; away: string };
 export type EspnMatchDetail = {
   statusDetail: string | null;
-  goals: EspnGoal[];
+  timeline: EspnTimelineEvent[];
   stats: EspnStat[];
   shootout: { home: number; away: number } | null;
 };
@@ -93,6 +97,28 @@ function scorerFromText(text: string): string | null {
   const afterScore = text.split(/\.\s+/).slice(1).join(". ");
   const m = afterScore.match(/^([^(]+?)\s*\(/);
   return m ? m[1].trim() : null;
+}
+
+// Nom du joueur précédant la parenthèse de l'équipe, ex. :
+// "Lionel Messi (Argentina) is shown the yellow card." → "Lionel Messi".
+function playerBeforeTeam(text: string): string | null {
+  const m = text.match(/^([^(]+?)\s*\(/);
+  return m ? m[1].trim() : null;
+}
+
+// Remplacement, ex. "Substitution, Argentina. Joueur A replaces Joueur B."
+// → { in: "Joueur A", out: "Joueur B" }.
+function parseSub(text: string): { in: string; out: string } | null {
+  const m = text.match(/\.\s*([^.]+?)\s+replaces\s+([^.]+?)\s*\.?\s*$/i);
+  return m ? { in: m[1].trim(), out: m[2].trim() } : null;
+}
+
+// Clé de tri d'une minute ESPN ("45'+2'", "90'+4'") : minute×100 + additionnel.
+function clockSort(display: string | undefined | null): number {
+  if (!display) return 99999;
+  const m = display.match(/(\d+)(?:\s*\+\s*(\d+))?/);
+  if (!m) return 99999;
+  return Number(m[1]) * 100 + (m[2] ? Number(m[2]) : 0);
 }
 
 /**
@@ -185,28 +211,69 @@ export async function getEspnMatchDetail(
     headerComp?.status?.type?.shortDetail ??
     null;
 
-  // Buts : on prend keyEvents (sinon scoringPlays) et on garde les actions de but.
+  // Fil du match : buts, cartons et remplacements (keyEvents, sinon scoringPlays
+  // pour les seuls buts), classés et triés par minute.
   const rawEvents = summary.keyEvents ?? summary.scoringPlays ?? [];
-  const goals: EspnGoal[] = rawEvents
-    .filter(
-      (ev) => ev.scoringPlay === true || /goal/i.test(ev.type?.text ?? ""),
-    )
-    .map((ev) => {
-      const raw = ev.text ?? ev.shortText ?? "";
-      const typeText = ev.type?.text ?? "";
-      const isOwn = /own goal/i.test(typeText) || /own goal/i.test(raw);
-      const isPen = /penalt/i.test(typeText) || /penalt/i.test(raw);
+  const timeline: EspnTimelineEvent[] = [];
+  for (const ev of rawEvents) {
+    const raw = ev.text ?? ev.shortText ?? "";
+    const typeText = ev.type?.text ?? "";
+    const both = `${typeText} ${raw}`;
+    const base = {
+      minute: ev.clock?.displayValue ?? null,
+      sort: clockSort(ev.clock?.displayValue),
+      teamCode: resolveTeamCode(ev),
+    };
+
+    const isGoal = ev.scoringPlay === true || /goal/i.test(typeText);
+    if (isGoal) {
+      const isOwn = /own goal/i.test(both);
+      const isPen = /penalt/i.test(both);
       const scorer =
         ev.athletesInvolved?.[0]?.displayName?.trim() ||
         scorerFromText(raw) ||
         "But";
-      return {
-        minute: ev.clock?.displayValue ?? null,
-        teamCode: resolveTeamCode(ev),
-        scorer,
-        note: isOwn ? "csc" : isPen ? "pén." : null,
-      };
-    });
+      timeline.push({
+        ...base,
+        kind: "goal",
+        text: scorer,
+        sub: isOwn ? "csc" : isPen ? "pén." : null,
+      });
+      continue;
+    }
+
+    if (/substitution/i.test(both)) {
+      const players = parseSub(raw);
+      const inName =
+        players?.in || ev.athletesInvolved?.[0]?.displayName?.trim() || null;
+      const outName =
+        players?.out || ev.athletesInvolved?.[1]?.displayName?.trim() || null;
+      if (!inName && !outName) continue;
+      timeline.push({
+        ...base,
+        kind: "sub",
+        text: inName ?? "—",
+        sub: outName,
+      });
+      continue;
+    }
+
+    const isRed = /red card/i.test(both) || /yellow[\s-]*red/i.test(both);
+    const isYellow = !isRed && /yellow card/i.test(both);
+    if (isRed || isYellow) {
+      const player =
+        ev.athletesInvolved?.[0]?.displayName?.trim() ||
+        playerBeforeTeam(raw) ||
+        "Carton";
+      timeline.push({
+        ...base,
+        kind: isRed ? "red" : "yellow",
+        text: player,
+        sub: null,
+      });
+    }
+  }
+  timeline.sort((a, b) => a.sort - b.sort);
 
   // Stats : on relie chaque équipe du boxscore à domicile/extérieur par son code.
   const teams = summary.boxscore?.teams ?? [];
@@ -229,5 +296,5 @@ export async function getEspnMatchDetail(
       ? { home: sHome, away: sAway }
       : null;
 
-  return { statusDetail, goals, stats, shootout };
+  return { statusDetail, timeline, stats, shootout };
 }
