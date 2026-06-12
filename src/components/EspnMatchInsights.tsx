@@ -42,18 +42,18 @@ export default async function EspnMatchInsights({
         </div>
       )}
 
-      {/* Buteurs */}
+      {/* Buteurs : chaque but du côté de l'équipe qui l'a marqué (dom. à gauche) */}
       {goals.length > 0 && (
         <div className="glass rounded-2xl p-4">
           <div className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
             Buts ⚽
           </div>
-          <ul className="flex flex-col gap-1.5 text-sm">
-            {goals.map((g, i) => (
-              <li key={i} className="flex items-center gap-2">
-                <span className="w-10 shrink-0 font-display font-bold tabular-nums text-emerald-300">
-                  {g.minute ?? ""}
-                </span>
+          <ul className="flex flex-col gap-2 text-sm">
+            {goals.map((g, i) => {
+              const isHome =
+                (g.teamCode ?? "").toUpperCase() === homeCode.toUpperCase();
+              const label = `${g.scorer}${g.note ? ` (${g.note})` : ""}`;
+              const dot = (
                 <span
                   className="h-2 w-2 shrink-0 rounded-full"
                   style={{
@@ -62,12 +62,41 @@ export default async function EspnMatchInsights({
                       : "rgb(148 163 184)",
                   }}
                 />
-                <span className="min-w-0 truncate text-slate-200">
-                  {g.scorer}
-                  {g.note ? ` (${g.note})` : ""}
+              );
+              const min = (
+                <span className="shrink-0 font-display font-bold tabular-nums text-emerald-300">
+                  {g.minute ?? ""}
                 </span>
-              </li>
-            ))}
+              );
+              return (
+                <li key={i} className="flex items-center gap-2">
+                  {/* Moitié domicile */}
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    {isHome && (
+                      <>
+                        {min}
+                        {dot}
+                        <span className="min-w-0 truncate text-slate-200">
+                          {label}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  {/* Moitié extérieur */}
+                  <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+                    {!isHome && (
+                      <>
+                        <span className="min-w-0 truncate text-right text-slate-200">
+                          {label}
+                        </span>
+                        {dot}
+                        {min}
+                      </>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
