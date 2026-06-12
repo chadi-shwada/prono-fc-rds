@@ -70,7 +70,7 @@ export function playerOfTheDayFrom(matches: MatchForAward[]): DailyAward | null 
         userId,
         name: v.name,
         points: v.points,
-        dayLabel: formatDayLabel(new Date(lastDay)),
+        dayLabel: formatDayLabel(new Date(lastDay + "T00:00:00")),
       };
     }
   }
