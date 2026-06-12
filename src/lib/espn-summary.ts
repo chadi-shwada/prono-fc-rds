@@ -10,7 +10,7 @@ import "server-only";
 const BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world";
 
 // --- Types souples (tous les champs optionnels : on accède via optional chaining) ---
-type TeamRef = { abbreviation?: string; displayName?: string };
+type TeamRef = { id?: string | number; abbreviation?: string; displayName?: string };
 type StatusType = {
   state?: string;
   detail?: string;
@@ -130,6 +130,40 @@ export async function getEspnMatchDetail(
 
   const headerComp = summary.header?.competitions?.[0];
 
+  // Table de correspondance équipe ESPN → code FIFA, pour situer chaque but du bon
+  // côté : les keyEvents n'exposent pas toujours l'abréviation directement.
+  const idToCode = new Map<string, string>();
+  const nameToCode = new Map<string, string>();
+  const indexTeam = (t: TeamRef | undefined) => {
+    const code = t?.abbreviation?.toUpperCase();
+    if (!code) return;
+    if (t?.id != null) idToCode.set(String(t.id), code);
+    if (t?.displayName) nameToCode.set(t.displayName.toLowerCase(), code);
+  };
+  for (const c of event.competitions?.[0]?.competitors ?? []) indexTeam(c.team);
+  for (const c of headerComp?.competitors ?? []) indexTeam(c.team);
+
+  // Résout le code de l'équipe d'un but : id ESPN, puis abréviation, puis nom
+  // complet, puis nom entre parenthèses du texte ("… Buteur (Team Name) …").
+  const resolveTeamCode = (ev: KeyEvent): string | null => {
+    const t = ev.team;
+    if (t?.id != null) {
+      const c = idToCode.get(String(t.id));
+      if (c) return c;
+    }
+    if (t?.abbreviation) return t.abbreviation.toUpperCase();
+    if (t?.displayName) {
+      const c = nameToCode.get(t.displayName.toLowerCase());
+      if (c) return c;
+    }
+    const m = (ev.text ?? ev.shortText ?? "").match(/\(([^)]+)\)/);
+    if (m) {
+      const c = nameToCode.get(m[1].trim().toLowerCase());
+      if (c) return c;
+    }
+    return null;
+  };
+
   // Statut détaillé (mi-temps, prolongation, T.A.B., minute…).
   const statusDetail =
     event.status?.type?.detail ??
@@ -154,7 +188,7 @@ export async function getEspnMatchDetail(
         "But";
       return {
         minute: ev.clock?.displayValue ?? null,
-        teamCode: ev.team?.abbreviation?.toUpperCase() ?? null,
+        teamCode: resolveTeamCode(ev),
         scorer,
         note: isOwn ? "csc" : isPen ? "pén." : null,
       };
