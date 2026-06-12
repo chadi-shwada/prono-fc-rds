@@ -39,7 +39,7 @@ export default async function AuthLayout({
           </div>
         </Reveal>
 
-        {firstMatch && (
+        {firstMatch && firstMatch.kickoff > new Date() && (
           <Reveal delay={0.2}>
             <div className="mt-6">
               <Countdown target={firstMatch.kickoff.toISOString()} />

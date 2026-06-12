@@ -234,7 +234,7 @@ export default async function HomePage() {
         </Reveal>
       )}
 
-      {firstMatch && (
+      {championOpen && firstMatch && (
         <Reveal delay={0.05}>
           <Countdown target={firstMatch.kickoff.toISOString()} />
         </Reveal>

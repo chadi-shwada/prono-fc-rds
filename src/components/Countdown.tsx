@@ -36,15 +36,9 @@ export default function Countdown({ target }: { target: string }) {
   const parts = diffParts(targetMs, second * 1000);
   const started = second * 1000 >= targetMs;
 
-  if (started) {
-    return (
-      <div className="glass rounded-2xl p-5 text-center">
-        <div className="font-display text-lg font-extrabold text-emerald-400">
-          ⚽ Le tournoi a commencé ! Bonne chance 🍀
-        </div>
-      </div>
-    );
-  }
+  // Le tournoi a commencé : on n'affiche plus rien (ni compte à rebours, ni
+  // carte « le tournoi a commencé »).
+  if (started) return null;
 
   const items: [string, number][] = [
     ["Jours", parts?.d ?? 0],

@@ -136,7 +136,7 @@ export default async function Landing() {
         )}
 
         {/* Compte à rebours */}
-        {firstMatch && (
+        {firstMatch && firstMatch.kickoff > new Date() && (
           <div className="rise-in mx-auto mt-10 max-w-md" style={{ animationDelay: "0.1s" }}>
             <Countdown target={firstMatch.kickoff.toISOString()} />
           </div>
