@@ -82,6 +82,27 @@ export async function broadcastToAll(payload: Payload): Promise<number> {
 }
 
 /**
+ * Alerte d'exploitation aux admins : push (navigateurs des admins) + Discord
+ * webhook si activé. Best-effort. Sert p. ex. à signaler une synchro en échec
+ * durable (clé API expirée, source qui change de format…).
+ */
+export async function notifyAdmins(payload: Payload): Promise<void> {
+  const pushOn = ensureConfigured();
+  const discordOn = isDiscordWebhookEnabled();
+  if (!pushOn && !discordOn) return;
+  if (pushOn) {
+    const admins = await prisma.user.findMany({
+      where: { isAdmin: true },
+      select: { id: true },
+    });
+    await Promise.all(admins.map((a) => sendToUser(a.id, payload)));
+  }
+  if (discordOn) {
+    await postToDiscord(`🚨 **${payload.title}** — ${payload.body}`);
+  }
+}
+
+/**
  * Envoie les notifications en attente (push + Discord), idempotent grâce aux
  * horodatages :
  *  - rappel ~1h avant le coup d'envoi (push aux joueurs sans prono + Discord),

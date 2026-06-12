@@ -29,6 +29,30 @@ services:
       - app-data:/data
     expose:
       - "3000"
+    # Sonde de santé : process vivant + base SQLite accessible. node:22 fournit
+    # fetch global (pas de curl/wget dans l'image slim). Un conteneur figé devient
+    # « unhealthy » → le service autoheal le redémarre (restart: unless-stopped ne
+    # réagit qu'à la sortie du process, pas à l'état unhealthy).
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redémarre automatiquement tout conteneur passé « unhealthy ».
+  autoheal:
+    image: willfarrell/autoheal:latest
+    restart: unless-stopped
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: all
+      AUTOHEAL_INTERVAL: 30
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 
   caddy:
     image: caddy:2
@@ -121,6 +145,16 @@ services:
       - discord-data:/data
     expose:
       - "3000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   cron-discord:
     image: alpine:3
