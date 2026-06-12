@@ -233,6 +233,45 @@ html {
   }
 }
 
+/* Ballon qui roule à travers l'écran (occasionnel). Le conteneur gère le
+   déplacement + la traînée ; l'emoji enfant gère la rotation (sinon la traînée
+   tournerait avec). Il traverse sur ~18 % du cycle puis reste hors-champ. */
+.rolling-ball {
+  left: -12vw;
+  will-change: transform;
+  animation: rollMove linear infinite;
+}
+.rolling-ball::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: 90px;
+  height: 7px;
+  margin-right: -6px;
+  transform: translateY(-50%);
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.22), transparent);
+  filter: blur(4px);
+  border-radius: 999px;
+}
+.rolling-ball-emoji {
+  display: inline-block;
+  opacity: 0.18;
+  filter: drop-shadow(0 5px 12px rgba(0, 0, 0, 0.4));
+  will-change: transform;
+  animation: rollSpin linear infinite;
+}
+/* translateX(0) = hors-champ à gauche (left: -12vw) ; 124vw = hors-champ à droite */
+@keyframes rollMove {
+  0% { transform: translateX(0); }
+  18%, 100% { transform: translateX(124vw); }
+}
+/* 4 tours pendant la traversée → effet de roulement lié à l'avancée */
+@keyframes rollSpin {
+  0% { transform: rotate(0deg); }
+  18%, 100% { transform: rotate(1440deg); }
+}
+
 /* Bandeau de drapeaux défilant */
 .marquee {
   overflow: hidden;
@@ -441,6 +480,8 @@ html {
   .glow-gold,
   .marquee-track,
   .particle-float,
+  .rolling-ball,
+  .rolling-ball-emoji,
   .skeleton::after,
   .pulse-glow,
   .scroll-cue,

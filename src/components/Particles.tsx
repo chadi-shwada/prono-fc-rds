@@ -23,6 +23,16 @@ const ITEMS: Pos[] = [
   { e: "🏆", size: 44, op: 0.14, dur: 8.5, delay: 3, style: { bottom: "13%", right: "8%" } },
 ];
 
+// Ballon qui ROULE à travers l'écran de temps en temps (traînée + rotation liée
+// au déplacement). Hors-champ la majeure partie du cycle → clin d'œil occasionnel,
+// pas un défilement continu. Hauteurs/cadences décalées pour ne pas les voir
+// passer ensemble.
+type Roller = { size: number; dur: number; delay: number; style: CSSProperties };
+const ROLLERS: Roller[] = [
+  { size: 34, dur: 23, delay: 4, style: { bottom: "16%" } },
+  { size: 26, dur: 29, delay: 15, style: { top: "33%" } },
+];
+
 export default function Particles() {
   return (
     <div
@@ -41,6 +51,29 @@ export default function Particles() {
             }}
           >
             {it.e}
+          </span>
+        </span>
+      ))}
+
+      {ROLLERS.map((r, i) => (
+        <span
+          key={`roll-${i}`}
+          className="rolling-ball absolute"
+          style={{
+            ...r.style,
+            animationDuration: `${r.dur}s`,
+            animationDelay: `${r.delay}s`,
+          }}
+        >
+          <span
+            className="rolling-ball-emoji select-none"
+            style={{
+              fontSize: r.size,
+              animationDuration: `${r.dur}s`,
+              animationDelay: `${r.delay}s`,
+            }}
+          >
+            ⚽
           </span>
         </span>
       ))}
