@@ -40,11 +40,18 @@ function parseClock(clock: string | undefined): number | null {
 /** Horloge propre, temps additionnel inclus : "90'+4'" → "90+4", sinon null. */
 function parseClockText(clock: string | undefined): string | null {
   if (!clock) return null;
-  const m = clock.match(/(\d+)(?:\s*\+\s*(\d+))?/);
-  if (!m) return null;
-  const base = Number(m[1]);
+  const baseMatch = clock.match(/(\d+)/);
+  if (!baseMatch) return null;
+  const base = Number(baseMatch[1]);
   if (!Number.isFinite(base) || base < 0 || base > 130) return null;
-  return m[2] ? `${base}+${Number(m[2])}` : `${base}`;
+  // Temps additionnel : nombre situé après un "+" (ESPN insère souvent une
+  // apostrophe avant le +, ex. "45'+2'", d'où une extraction séparée et tolérante).
+  const plusMatch = clock.match(/\+\s*(\d+)/);
+  if (plusMatch) {
+    const add = Number(plusMatch[1]);
+    if (Number.isFinite(add) && add > 0) return `${base}+${add}`;
+  }
+  return `${base}`;
 }
 
 type LiveScore = {
