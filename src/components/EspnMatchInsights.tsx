@@ -51,11 +51,11 @@ export default async function EspnMatchInsights({
         </div>
       )}
 
-      {/* Pronostic ESPN : % de victoire de chaque camp (et match nul) */}
+      {/* Pronostic des cotes : proba implicite de chaque issue (dom. / nul / ext.) */}
       {predictor && (
         <div className="glass rounded-2xl p-4">
           <div className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Pronostic ESPN 🔮
+            Pronostic des cotes 🔮
           </div>
           <div className="flex h-3 overflow-hidden rounded-full bg-white/10">
             {predictor.home > 0 && (

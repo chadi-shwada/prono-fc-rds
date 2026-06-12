@@ -19,7 +19,15 @@ type StatusType = {
 };
 type Competitor = {
   team?: TeamRef;
+  homeAway?: string; // "home" | "away" (l'attribution ESPN peut différer de la nôtre)
   shootoutScore?: number;
+};
+// Cotes (paris) : moneyline américain par issue (domicile / nul / extérieur).
+type OddSide = { moneyLine?: number | string };
+type OddsEntry = {
+  homeTeamOdds?: OddSide;
+  awayTeamOdds?: OddSide;
+  drawOdds?: OddSide;
 };
 type Event = {
   id?: string;
@@ -45,11 +53,16 @@ type PredictorSide = {
 };
 type Summary = {
   header?: {
-    competitions?: { status?: { type?: StatusType }; competitors?: Competitor[] }[];
+    competitions?: {
+      status?: { type?: StatusType };
+      competitors?: Competitor[];
+      odds?: OddsEntry[];
+    }[];
   };
   keyEvents?: KeyEvent[];
   scoringPlays?: KeyEvent[];
   boxscore?: { teams?: BoxTeam[] };
+  pickcenter?: OddsEntry[];
   predictor?: { homeTeam?: PredictorSide; awayTeam?: PredictorSide };
 };
 
@@ -306,28 +319,56 @@ export async function getEspnMatchDetail(
       ? { home: sHome, away: sAway }
       : null;
 
-  // Pronostic ESPN : % de victoire de chaque camp (+ nul). On rattache chaque
-  // côté à domicile/extérieur par le code de l'équipe (l'ordre ESPN peut différer).
-  const sideCode = (s: PredictorSide | undefined): string | null => {
-    if (!s) return null;
-    if (s.id != null) {
-      const c = idToCode.get(String(s.id));
-      if (c) return c;
-    }
-    if (s.team?.abbreviation) return s.team.abbreviation.toUpperCase();
-    if (s.team?.displayName) {
-      const c = nameToCode.get(s.team.displayName.toLowerCase());
-      if (c) return c;
-    }
-    return null;
-  };
+  // Probabilités : ESPN (foot) n'expose pas de « predictor » mais des COTES
+  // (pickcenter / odds du header). On convertit les moneyline en probabilités
+  // implicites, puis on normalise (retire la marge bookmaker) pour 3 % lisibles.
+  // L'attribution domicile/extérieur d'ESPN peut être inversée par rapport à la
+  // nôtre : on détecte le « home » ESPN via homeAway et on échange si besoin.
+  const espnComps =
+    headerComp?.competitors ?? event.competitions?.[0]?.competitors ?? [];
+  const espnHomeCode = up(
+    espnComps.find((c) => c.homeAway === "home")?.team?.abbreviation,
+  );
+  const swap = espnHomeCode === ac; // « home » ESPN = notre extérieur
+
   let predictor: EspnPredictor | null = null;
-  const pr = summary.predictor;
-  if (pr) {
+  const oddsEntries = [
+    ...(summary.pickcenter ?? []),
+    ...(headerComp?.odds ?? []),
+  ];
+  for (const e of oddsEntries) {
+    const h = impliedFromMoneyline(e.homeTeamOdds?.moneyLine);
+    const a = impliedFromMoneyline(e.awayTeamOdds?.moneyLine);
+    if (h == null || a == null) continue;
+    const d = impliedFromMoneyline(e.drawOdds?.moneyLine) ?? 0;
+    // h/a = proba ESPN domicile/extérieur ; on les remet dans notre repère.
+    const homeP = swap ? a : h;
+    const awayP = swap ? h : a;
+    const sum = homeP + awayP + d;
+    if (sum <= 0) continue;
+    predictor = {
+      home: Math.round((homeP / sum) * 100),
+      draw: Math.round((d / sum) * 100),
+      away: Math.round((awayP / sum) * 100),
+    };
+    break;
+  }
+
+  // Repli : si jamais un « predictor » (champ sports US) est présent.
+  if (!predictor && summary.predictor) {
+    const sideCode = (s: PredictorSide | undefined): string | null => {
+      if (!s) return null;
+      if (s.id != null) {
+        const c = idToCode.get(String(s.id));
+        if (c) return c;
+      }
+      if (s.team?.abbreviation) return s.team.abbreviation.toUpperCase();
+      return null;
+    };
     let homeWin: number | null = null;
     let awayWin: number | null = null;
     let tie: number | null = null;
-    for (const s of [pr.homeTeam, pr.awayTeam]) {
+    for (const s of [summary.predictor.homeTeam, summary.predictor.awayTeam]) {
       const win = Number(s?.gameProjection);
       const t = Number(s?.teamChanceTie);
       if (Number.isFinite(t)) tie = t;
@@ -350,4 +391,11 @@ export async function getEspnMatchDetail(
   }
 
   return { statusDetail, timeline, stats, shootout, predictor };
+}
+
+/** Probabilité implicite (0–1) d'une cote moneyline américaine, sinon null. */
+function impliedFromMoneyline(ml: number | string | undefined): number | null {
+  const n = Number(ml);
+  if (!Number.isFinite(n) || n === 0) return null;
+  return n > 0 ? 100 / (n + 100) : -n / (-n + 100);
 }
