@@ -53,10 +53,10 @@ export default async function MatchDetailPage({
     match.homeScore !== null &&
     match.awayScore !== null;
 
-  // Détails ESPN (buteurs / stats / T.A.B.) : pour tout match en cours ou terminé.
-  // Auto-masqué si ESPN n'a pas le match. Récupéré par date du coup d'envoi.
-  const showInsights =
-    (live || finished) && !!match.homeTeam && !!match.awayTeam;
+  // Détails ESPN : pronostic des cotes AVANT le match, puis fil du match / stats
+  // / T.A.B. en cours et après. Affiché dès que les deux équipes sont connues ;
+  // auto-masqué si ESPN n'a pas le match. Récupéré par date du coup d'envoi.
+  const showInsights = !!match.homeTeam && !!match.awayTeam;
 
   const isExact = (p: { homeScore: number; awayScore: number }) =>
     finished &&
