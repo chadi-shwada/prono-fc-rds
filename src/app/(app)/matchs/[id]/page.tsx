@@ -53,13 +53,10 @@ export default async function MatchDetailPage({
     match.homeScore !== null &&
     match.awayScore !== null;
 
-  // Détails ESPN (buteurs / stats / T.A.B.) : uniquement pour un match en cours ou
-  // récemment terminé (ESPN ne sert que la journée en cours). Auto-masqué sinon.
-  const recent =
-    match.kickoff <= now &&
-    now.getTime() - match.kickoff.getTime() < 24 * 60 * 60 * 1000;
+  // Détails ESPN (buteurs / stats / T.A.B.) : pour tout match en cours ou terminé.
+  // Auto-masqué si ESPN n'a pas le match. Récupéré par date du coup d'envoi.
   const showInsights =
-    (live || finished) && recent && !!match.homeTeam && !!match.awayTeam;
+    (live || finished) && !!match.homeTeam && !!match.awayTeam;
 
   const isExact = (p: { homeScore: number; awayScore: number }) =>
     finished &&
@@ -160,6 +157,7 @@ export default async function MatchDetailPage({
             <EspnMatchInsights
               homeCode={match.homeTeam.code}
               awayCode={match.awayTeam.code}
+              kickoff={match.kickoff}
             />
           </Suspense>
         </Reveal>

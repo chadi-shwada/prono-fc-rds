@@ -18,11 +18,13 @@ function barWidths(home: string, away: string): [number, number] | null {
 export default async function EspnMatchInsights({
   homeCode,
   awayCode,
+  kickoff,
 }: {
   homeCode: string;
   awayCode: string;
+  kickoff: Date;
 }) {
-  const d = await getEspnMatchDetail(homeCode, awayCode);
+  const d = await getEspnMatchDetail(homeCode, awayCode, kickoff);
   if (!d) return null;
   const { goals, stats, shootout } = d;
   if (goals.length === 0 && stats.length === 0 && !shootout) return null;

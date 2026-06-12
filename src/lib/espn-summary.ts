@@ -103,24 +103,38 @@ function scorerFromText(text: string): string | null {
 export async function getEspnMatchDetail(
   homeCode: string,
   awayCode: string,
+  kickoff: Date,
 ): Promise<EspnMatchDetail | null> {
   const hc = up(homeCode);
   const ac = up(awayCode);
   const key = [hc, ac].sort().join("|");
 
-  const board = (await fetchJson(`${BASE}/scoreboard`)) as
-    | { events?: Event[] }
-    | null;
-  if (!board) return null;
-
-  const event = (board.events ?? []).find((e) => {
-    const comps = e.competitions?.[0]?.competitors ?? [];
-    const codes = comps
+  const matchesPair = (e: Event) => {
+    const codes = (e.competitions?.[0]?.competitors ?? [])
       .map((c) => up(c.team?.abbreviation))
       .filter(Boolean)
       .sort();
     return codes.length === 2 && codes.join("|") === key;
-  });
+  };
+
+  // ESPN ne renvoie par défaut que la journée en cours : on interroge donc la
+  // plage de dates autour du coup d'envoi (±1 j pour absorber les décalages de
+  // fuseau), avec repli sur le scoreboard par défaut (matchs du jour / en direct).
+  const day = 24 * 60 * 60 * 1000;
+  const ymd = (d: Date) =>
+    `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(
+      d.getUTCDate(),
+    ).padStart(2, "0")}`;
+  const dated = `${BASE}/scoreboard?dates=${ymd(
+    new Date(kickoff.getTime() - day),
+  )}-${ymd(new Date(kickoff.getTime() + day))}`;
+
+  let event: Event | undefined;
+  for (const url of [dated, `${BASE}/scoreboard`]) {
+    const board = (await fetchJson(url)) as { events?: Event[] } | null;
+    event = board?.events?.find(matchesPair);
+    if (event?.id) break;
+  }
   if (!event?.id) return null;
 
   const summary = (await fetchJson(
