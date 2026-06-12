@@ -75,24 +75,33 @@ export default function AdminResultForm({
   }, [open]);
 
   return (
-    <form action={action} className="flex flex-wrap items-center gap-2">
+    <form
+      action={action}
+      className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
+    >
       <input type="hidden" name="matchId" value={matchId} />
       <input type="hidden" name="status" value={status} />
       <input type="hidden" name="winner" value={showWinner ? winner : ""} />
-      <span className="flex min-w-0 flex-1 items-center justify-end gap-2 text-right text-sm">
-        <span className="truncate">{home.name}</span>
-        <Flag code={home.code} size={26} className="shrink-0" />
-      </span>
-      <ScoreInput name="homeScore" defaultValue={initialHome} ariaLabel="Score domicile" />
-      <span className="text-slate-500">-</span>
-      <ScoreInput name="awayScore" defaultValue={initialAway} ariaLabel="Score extérieur" />
-      <span className="flex min-w-0 flex-1 items-center gap-2 text-sm">
-        <Flag code={away.code} size={26} className="shrink-0" />
-        <span className="truncate">{away.name}</span>
-      </span>
 
-      {/* Sélecteur de statut au design de l'app */}
-      <div ref={ddRef} className="relative">
+      {/* Match + score (sur sa propre ligne en mobile) */}
+      <div className="flex items-center gap-2 sm:flex-1">
+        <span className="flex min-w-0 flex-1 items-center justify-end gap-2 text-right text-sm">
+          <span className="truncate">{home.name}</span>
+          <Flag code={home.code} size={26} className="shrink-0" />
+        </span>
+        <ScoreInput name="homeScore" defaultValue={initialHome} ariaLabel="Score domicile" />
+        <span className="text-slate-500">-</span>
+        <ScoreInput name="awayScore" defaultValue={initialAway} ariaLabel="Score extérieur" />
+        <span className="flex min-w-0 flex-1 items-center gap-2 text-sm">
+          <Flag code={away.code} size={26} className="shrink-0" />
+          <span className="truncate">{away.name}</span>
+        </span>
+      </div>
+
+      {/* Contrôles : statut, T.A.B., minute, enregistrer */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Sélecteur de statut au design de l'app */}
+        <div ref={ddRef} className="relative">
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
@@ -183,6 +192,7 @@ export default function AdminResultForm({
       >
         {pending ? "…" : state?.ok ? "✓" : "Enregistrer"}
       </button>
+      </div>
       {state?.error && (
         <p className="w-full text-xs text-red-300">{state.error}</p>
       )}
