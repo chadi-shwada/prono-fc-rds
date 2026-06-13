@@ -1,5 +1,10 @@
 import { getEspnMatchDetail } from "@/lib/espn-summary";
-import { teamColor } from "@/lib/teamColor";
+
+// Couleurs fixes des barres (cotes + statistiques) : toujours rouge (domicile)
+// vs bleu (extérieur), pour rester lisibles quels que soient les maillots —
+// deux équipes en rouge donnaient des barres indistinctes.
+const HOME_BAR = "#ef4444"; // rouge
+const AWAY_BAR = "#3b82f6"; // bleu
 
 /** Largeur de barre proportionnelle si les deux valeurs sont numériques. */
 function barWidths(home: string, away: string): [number, number] | null {
@@ -62,7 +67,7 @@ export default async function EspnMatchInsights({
               <div
                 style={{
                   width: `${predictor.home}%`,
-                  background: teamColor(homeCode),
+                  background: HOME_BAR,
                 }}
               />
             )}
@@ -73,7 +78,7 @@ export default async function EspnMatchInsights({
               <div
                 style={{
                   width: `${predictor.away}%`,
-                  background: teamColor(awayCode),
+                  background: AWAY_BAR,
                 }}
               />
             )}
@@ -82,7 +87,7 @@ export default async function EspnMatchInsights({
             <span className="flex items-center gap-1.5">
               <span
                 className="h-2 w-2 shrink-0 rounded-full"
-                style={{ background: teamColor(homeCode) }}
+                style={{ background: HOME_BAR }}
               />
               <span className="font-bold text-white">{predictor.home}%</span>
             </span>
@@ -91,7 +96,7 @@ export default async function EspnMatchInsights({
               <span className="font-bold text-white">{predictor.away}%</span>
               <span
                 className="h-2 w-2 shrink-0 rounded-full"
-                style={{ background: teamColor(awayCode) }}
+                style={{ background: AWAY_BAR }}
               />
             </span>
           </div>
@@ -182,13 +187,13 @@ export default async function EspnMatchInsights({
                       <div
                         style={{
                           width: `${widths[0]}%`,
-                          background: teamColor(homeCode),
+                          background: HOME_BAR,
                         }}
                       />
                       <div
                         style={{
                           width: `${widths[1]}%`,
-                          background: teamColor(awayCode),
+                          background: AWAY_BAR,
                         }}
                       />
                     </div>
