@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 
 // Détails d'un match via l'endpoint "summary" d'ESPN (non-officiel) : buteurs,
 // statut détaillé (mi-temps / prolongation / T.A.B.), stats (possession, tirs…) et
@@ -20,6 +21,7 @@ type StatusType = {
 type Competitor = {
   team?: TeamRef;
   homeAway?: string; // "home" | "away" (l'attribution ESPN peut différer de la nôtre)
+  score?: number | string; // score en cours (temps réglementaire)
   shootoutScore?: number;
 };
 // Cotes (paris) : moneyline américain par issue (domicile / nul / extérieur).
@@ -81,6 +83,9 @@ export type EspnStat = { label: string; home: string; away: string };
 export type EspnPredictor = { home: number; draw: number; away: number };
 export type EspnMatchDetail = {
   statusDetail: string | null;
+  // Score en cours d'après ESPN (même fraîcheur que le fil du match), pour éviter
+  // que le score du haut soit en retard sur les buts affichés dans le fil.
+  score: { home: number; away: number } | null;
   timeline: EspnTimelineEvent[];
   stats: EspnStat[];
   shootout: { home: number; away: number } | null;
@@ -149,7 +154,7 @@ function clockSort(display: string | undefined | null): number {
  * Renvoie `null` si le match n'est pas trouvé côté ESPN (ex. pas dans la journée
  * en cours) ou en cas d'erreur.
  */
-export async function getEspnMatchDetail(
+async function fetchEspnMatchDetail(
   homeCode: string,
   awayCode: string,
   kickoff: Date,
@@ -319,6 +324,15 @@ export async function getEspnMatchDetail(
       ? { home: sHome, away: sAway }
       : null;
 
+  // Score en cours (header ESPN) — sert au score affiché en haut de la page match,
+  // pour qu'il bouge en même temps que les buts du fil du match.
+  const rawHome = Number(comps.find((c) => up(c.team?.abbreviation) === hc)?.score);
+  const rawAway = Number(comps.find((c) => up(c.team?.abbreviation) === ac)?.score);
+  const score =
+    Number.isFinite(rawHome) && Number.isFinite(rawAway)
+      ? { home: rawHome, away: rawAway }
+      : null;
+
   // Probabilités : ESPN (foot) n'expose pas de « predictor » mais des COTES
   // (pickcenter / odds du header). On convertit les moneyline en probabilités
   // implicites, puis on normalise (retire la marge bookmaker) pour 3 % lisibles.
@@ -390,8 +404,12 @@ export async function getEspnMatchDetail(
     }
   }
 
-  return { statusDetail, timeline, stats, shootout, predictor };
+  return { statusDetail, score, timeline, stats, shootout, predictor };
 }
+
+// Mémoïsé par requête : la page match appelle ce détail deux fois (score du haut
+// + fil/stats) — `cache` garantit un seul appel ESPN par rendu.
+export const getEspnMatchDetail = cache(fetchEspnMatchDetail);
 
 /** Probabilité implicite (0–1) d'une cote moneyline américaine, sinon null. */
 function impliedFromMoneyline(ml: number | string | undefined): number | null {

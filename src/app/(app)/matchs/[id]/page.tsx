@@ -12,6 +12,7 @@ import LiveBadge from "@/components/LiveBadge";
 import LiveScore from "@/components/LiveScore";
 import LiveRefresher from "@/components/LiveRefresher";
 import EspnMatchInsights from "@/components/EspnMatchInsights";
+import EspnLiveScore from "@/components/EspnLiveScore";
 import EspnInsightsSkeleton from "@/components/EspnInsightsSkeleton";
 import Avatar from "@/components/Avatar";
 import Reactions from "@/components/Reactions";
@@ -129,11 +130,32 @@ export default async function MatchDetailPage({
               </span>
             </span>
             {live ? (
-              <LiveScore
-                home={match.homeScore}
-                away={match.awayScore}
-                className="px-4 py-2 text-2xl"
-              />
+              match.homeTeam && match.awayTeam ? (
+                <Suspense
+                  fallback={
+                    <LiveScore
+                      home={match.homeScore}
+                      away={match.awayScore}
+                      className="px-4 py-2 text-2xl"
+                    />
+                  }
+                >
+                  <EspnLiveScore
+                    homeCode={match.homeTeam.code}
+                    awayCode={match.awayTeam.code}
+                    kickoff={match.kickoff}
+                    fallbackHome={match.homeScore}
+                    fallbackAway={match.awayScore}
+                    className="px-4 py-2 text-2xl"
+                  />
+                </Suspense>
+              ) : (
+                <LiveScore
+                  home={match.homeScore}
+                  away={match.awayScore}
+                  className="px-4 py-2 text-2xl"
+                />
+              )
             ) : (
               <span className="rounded-xl bg-white/10 px-4 py-2 font-display text-2xl font-extrabold">
                 {finished ? `${match.homeScore} - ${match.awayScore}` : "VS"}
