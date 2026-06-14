@@ -33,7 +33,7 @@ type OddsEntry = {
 };
 type Event = {
   id?: string;
-  status?: { type?: StatusType };
+  status?: { type?: StatusType; displayClock?: string };
   competitions?: { competitors?: Competitor[] }[];
 };
 type KeyEvent = {
@@ -56,7 +56,7 @@ type PredictorSide = {
 type Summary = {
   header?: {
     competitions?: {
-      status?: { type?: StatusType };
+      status?: { type?: StatusType; displayClock?: string };
       competitors?: Competitor[];
       odds?: OddsEntry[];
     }[];
@@ -83,6 +83,8 @@ export type EspnStat = { label: string; home: string; away: string };
 export type EspnPredictor = { home: number; draw: number; away: number };
 export type EspnMatchDetail = {
   statusDetail: string | null;
+  // Horloge de jeu (temps additionnel inclus, ex. "90+4"), pour la pastille live.
+  clock: string | null;
   // Score en cours d'après ESPN (même fraîcheur que le fil du match), pour éviter
   // que le score du haut soit en retard sur les buts affichés dans le fil.
   score: { home: number; away: number } | null;
@@ -117,6 +119,21 @@ async function fetchJson(url: string): Promise<unknown | null> {
 }
 
 const up = (s: string | undefined) => (s ?? "").toUpperCase();
+
+/** Horloge propre, temps additionnel inclus : "90'+4'" → "90+4", sinon null. */
+function parseClockText(clock: string | undefined): string | null {
+  if (!clock) return null;
+  const baseMatch = clock.match(/(\d+)/);
+  if (!baseMatch) return null;
+  const base = Number(baseMatch[1]);
+  if (!Number.isFinite(base) || base < 0 || base > 130) return null;
+  const plusMatch = clock.match(/\+\s*(\d+)/);
+  if (plusMatch) {
+    const add = Number(plusMatch[1]);
+    if (Number.isFinite(add) && add > 0) return `${base}+${add}`;
+  }
+  return `${base}`;
+}
 
 // Extrait le nom du buteur depuis le texte anglais d'ESPN, ex. :
 // "Goal! Mexico 1, South Africa 0. Julián Quiñones (Mexico) right footed shot…"
@@ -238,6 +255,11 @@ async function fetchEspnMatchDetail(
     headerComp?.status?.type?.detail ??
     headerComp?.status?.type?.shortDetail ??
     null;
+
+  // Horloge de jeu (temps additionnel inclus) pour la pastille « En direct ».
+  const clock = parseClockText(
+    event.status?.displayClock ?? headerComp?.status?.displayClock,
+  );
 
   // Fil du match : buts, cartons et remplacements (keyEvents, sinon scoringPlays
   // pour les seuls buts), classés et triés par minute.
@@ -404,12 +426,58 @@ async function fetchEspnMatchDetail(
     }
   }
 
-  return { statusDetail, score, timeline, stats, shootout, predictor };
+  return { statusDetail, clock, score, timeline, stats, shootout, predictor };
 }
 
-// Mémoïsé par requête : la page match appelle ce détail deux fois (score du haut
-// + fil/stats) — `cache` garantit un seul appel ESPN par rendu.
-export const getEspnMatchDetail = cache(fetchEspnMatchDetail);
+// --- Délai d'affichage live (anti-avance sur le direct) -----------------------
+// Les données ESPN sont quasi temps réel ; pour rester DERRIÈRE le direct plutôt
+// qu'en avance, on garde un court historique par match et on renvoie l'instantané
+// d'il y a ~LIVE_DELAY_SECONDS. Mémoire process (réinitialisé au redémarrage,
+// se recharge en quelques secondes). Réglable via la variable d'env.
+type Snapshot = { at: number; detail: EspnMatchDetail | null };
+const liveHistory = new Map<string, Snapshot[]>();
+
+function liveDelayMs(): number {
+  const s = Number(process.env.LIVE_DELAY_SECONDS);
+  return Number.isFinite(s) && s > 0 ? s * 1000 : 0;
+}
+
+async function getEspnMatchDetailDelayed(
+  homeCode: string,
+  awayCode: string,
+  kickoff: Date,
+): Promise<EspnMatchDetail | null> {
+  const fresh = await fetchEspnMatchDetail(homeCode, awayCode, kickoff);
+  const delay = liveDelayMs();
+  if (delay <= 0) return fresh;
+
+  const key = [up(homeCode), up(awayCode)].sort().join("|");
+  const now = Date.now();
+  const buf = liveHistory.get(key) ?? [];
+  buf.push({ at: now, detail: fresh });
+  // Purge ce qui est plus vieux que nécessaire (délai + marge).
+  const cutoff = now - delay - 60_000;
+  while (buf.length > 1 && buf[0].at < cutoff) buf.shift();
+  liveHistory.set(key, buf);
+
+  // Instantané le plus proche de (maintenant − délai).
+  const target = now - delay;
+  let chosen = buf[0];
+  let best = Math.abs(buf[0].at - target);
+  for (const s of buf) {
+    const d = Math.abs(s.at - target);
+    if (d <= best) {
+      best = d;
+      chosen = s;
+    }
+  }
+  return chosen.detail;
+}
+
+// Mémoïsé par requête : la page match appelle ce détail plusieurs fois (score,
+// pastille, fil/stats) — `cache` garantit un seul appel ESPN (et un seul
+// instantané cohérent) par rendu.
+export const getEspnMatchDetail = cache(getEspnMatchDetailDelayed);
 
 /** Probabilité implicite (0–1) d'une cote moneyline américaine, sinon null. */
 function impliedFromMoneyline(ml: number | string | undefined): number | null {

@@ -25,6 +25,9 @@ services:
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
       VAPID_SUBJECT: ${VAPID_SUBJECT}
+      # Délai d'affichage du live (secondes) pour rester derrière le direct TV
+      # plutôt qu'en avance. 0 = temps réel. Ajustable sans rebuild.
+      LIVE_DELAY_SECONDS: ${LIVE_DELAY_SECONDS:-40}
     volumes:
       - app-data:/data
     expose:
@@ -147,6 +150,7 @@ services:
       DISCORD_ADMIN_ID: ${DISCORD_ADMIN_ID:-}
       # Pas d'easter egg sur l'instance Discord
       EASTER_EGG_DISABLED: "1"
+      LIVE_DELAY_SECONDS: ${LIVE_DELAY_SECONDS:-40}
     volumes:
       - discord-data:/data
     expose:

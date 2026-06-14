@@ -13,6 +13,7 @@ import LiveScore from "@/components/LiveScore";
 import LiveRefresher from "@/components/LiveRefresher";
 import EspnMatchInsights from "@/components/EspnMatchInsights";
 import EspnLiveScore from "@/components/EspnLiveScore";
+import EspnLiveBadge from "@/components/EspnLiveBadge";
 import EspnInsightsSkeleton from "@/components/EspnInsightsSkeleton";
 import Avatar from "@/components/Avatar";
 import Reactions from "@/components/Reactions";
@@ -78,7 +79,7 @@ export default async function MatchDetailPage({
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
-      {live && <LiveRefresher />}
+      {live && <LiveRefresher intervalMs={10000} />}
       <Reveal>
         <Link
           href="/matchs"
@@ -116,7 +117,24 @@ export default async function MatchDetailPage({
               {match.groupName ? ` · Groupe ${match.groupName}` : ""}
             </span>
             <span className="justify-self-center">
-              {live && <LiveBadge minute={match.liveMinute} clock={match.liveClock} />}
+              {live &&
+                (match.homeTeam && match.awayTeam ? (
+                  <Suspense
+                    fallback={
+                      <LiveBadge minute={match.liveMinute} clock={match.liveClock} />
+                    }
+                  >
+                    <EspnLiveBadge
+                      homeCode={match.homeTeam.code}
+                      awayCode={match.awayTeam.code}
+                      kickoff={match.kickoff}
+                      fallbackClock={match.liveClock}
+                      fallbackMinute={match.liveMinute}
+                    />
+                  </Suspense>
+                ) : (
+                  <LiveBadge minute={match.liveMinute} clock={match.liveClock} />
+                ))}
             </span>
             <span className="min-w-0 justify-self-end truncate whitespace-nowrap">
               {formatKickoff(match.kickoff)}
