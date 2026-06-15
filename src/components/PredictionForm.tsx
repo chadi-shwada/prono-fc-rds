@@ -37,8 +37,18 @@ export default function PredictionForm({
   const hadPrediction = savedHome !== "" && savedAway !== "";
   const [curHome, setCurHome] = useState(savedHome);
   const [curAway, setCurAway] = useState(savedAway);
-  const isSaved =
-    hadPrediction && curHome === savedHome && curAway === savedAway;
+
+  // Source de vérité de l'enregistrement : ce que l'action vient de renvoyer
+  // (prioritaire), sinon le prono déjà présent au chargement. Évite que le bouton
+  // reste sur « Valider » quand la revalidation du cache routeur tarde.
+  const saved =
+    state?.ok && state.home != null && state.away != null
+      ? { h: String(state.home), a: String(state.away) }
+      : hadPrediction
+        ? { h: savedHome, a: savedAway }
+        : null;
+  const isSaved = saved != null && curHome === saved.h && curAway === saved.a;
+  const everSaved = hadPrediction || !!state?.ok;
 
   useEffect(() => {
     if (state?.ok) {
@@ -97,7 +107,7 @@ export default function PredictionForm({
           ? "…"
           : isSaved
             ? "✓ Enregistré"
-            : hadPrediction
+            : everSaved
               ? "Modifier mon prono"
               : "Valider mon prono"}
       </motion.button>

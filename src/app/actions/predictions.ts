@@ -5,7 +5,12 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { parseScore } from "@/lib/parse";
 
-export type PredState = { ok?: boolean; error?: string } | undefined;
+// `home`/`away`/`teamId` : valeurs effectivement enregistrées, renvoyées pour que
+// le client reflète l'état « enregistré » sans dépendre de la revalidation du
+// cache routeur (qui n'arrive pas toujours immédiatement après une server action).
+export type PredState =
+  | { ok?: boolean; error?: string; home?: number; away?: number; teamId?: string }
+  | undefined;
 
 /** Enregistre/modifie le pronostic d'un match (verrouillé au coup d'envoi). */
 export async function savePredictionAction(
@@ -35,7 +40,7 @@ export async function savePredictionAction(
   });
 
   revalidatePath("/matchs");
-  return { ok: true };
+  return { ok: true, home, away };
 }
 
 /** Enregistre le prono du vainqueur final (verrouillé au 1er match du tournoi). */
@@ -66,5 +71,5 @@ export async function saveChampionAction(
   });
 
   revalidatePath("/matchs");
-  return { ok: true };
+  return { ok: true, teamId };
 }

@@ -19,8 +19,11 @@ export default function ChampionForm({
     undefined,
   );
   const [selected, setSelected] = useState(initialTeamId ?? "");
-  // `initialTeamId` reflète le champion sauvegardé (mis à jour après revalidation).
-  const isSaved = selected !== "" && selected === initialTeamId;
+  // Source de vérité : l'équipe renvoyée par l'action (prioritaire), sinon le
+  // champion déjà enregistré. Évite de dépendre de la revalidation du cache routeur.
+  const savedTeamId = state?.ok && state.teamId ? state.teamId : initialTeamId;
+  const isSaved = selected !== "" && selected === savedTeamId;
+  const everSaved = !!initialTeamId || !!state?.ok;
 
   useEffect(() => {
     if (!state?.ok) return;
@@ -58,7 +61,7 @@ export default function ChampionForm({
           ? "…"
           : isSaved
             ? "✓ Champion enregistré"
-            : initialTeamId
+            : everSaved
               ? "Modifier"
               : "Valider"}
       </motion.button>
