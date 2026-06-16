@@ -87,15 +87,33 @@ export async function authAction(
   }
 
   if (!user) {
-    if (invite.maxUses !== null && invite.uses >= invite.maxUses) {
-      recordAttempt(rlKey, AUTH_FAILURE_WINDOW_MS);
-      return { error: "Ce code d'invitation a atteint sa limite d'utilisation." };
+    // Création + consommation du code dans UNE transaction : sans cela, deux
+    // inscriptions simultanées peuvent toutes deux passer le test `uses < maxUses`
+    // puis incrémenter, dépassant la limite. Le `updateMany` conditionnel sert de
+    // garde atomique (count === 0 ⇒ la limite était déjà atteinte → rollback).
+    try {
+      user = await prisma.$transaction(async (tx) => {
+        if (invite.maxUses !== null) {
+          const { count } = await tx.inviteCode.updateMany({
+            where: { id: invite.id, uses: { lt: invite.maxUses } },
+            data: { uses: { increment: 1 } },
+          });
+          if (count === 0) throw new Error("INVITE_LIMIT");
+        } else {
+          await tx.inviteCode.update({
+            where: { id: invite.id },
+            data: { uses: { increment: 1 } },
+          });
+        }
+        return tx.user.create({ data: { name } });
+      });
+    } catch (e) {
+      if (e instanceof Error && e.message === "INVITE_LIMIT") {
+        recordAttempt(rlKey, AUTH_FAILURE_WINDOW_MS);
+        return { error: "Ce code d'invitation a atteint sa limite d'utilisation." };
+      }
+      throw e;
     }
-    user = await prisma.user.create({ data: { name } });
-    await prisma.inviteCode.update({
-      where: { id: invite.id },
-      data: { uses: { increment: 1 } },
-    });
   }
 
   await createSession(user.id);

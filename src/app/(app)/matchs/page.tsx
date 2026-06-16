@@ -33,13 +33,12 @@ export default async function MatchsPage({
   const now = new Date();
   const filter = (await searchParams).filter ?? "avenir";
 
-  const [matches, myPreds, teams, myChampion, firstMatch] = await Promise.all([
+  const [matches, myPreds, myChampion, firstMatch] = await Promise.all([
     prisma.match.findMany({
       orderBy: { kickoff: "asc" },
       include: { homeTeam: true, awayTeam: true },
     }),
     prisma.prediction.findMany({ where: { userId: user.id } }),
-    prisma.team.findMany({ orderBy: { name: "asc" } }),
     prisma.championPrediction.findUnique({
       where: { userId: user.id },
       include: { team: true },
@@ -49,6 +48,13 @@ export default async function MatchsPage({
 
   const predByMatch = new Map(myPreds.map((p) => [p.matchId, p]));
   const tournamentStarted = !!firstMatch && firstMatch.kickoff <= now;
+
+  // Les 32 équipes ne servent qu'au formulaire « champion », affiché seulement
+  // tant que le tournoi n'a pas commencé. Inutile de les charger pendant la
+  // compétition (l'écrasante majorité du temps).
+  const teams = tournamentStarted
+    ? []
+    : await prisma.team.findMany({ orderBy: { name: "asc" } });
   const hasLive = matches.some((m) => m.status === MATCH_STATUS.LIVE);
 
   // Progression : pronos faits / matchs pronostiquables (équipes connues, à venir)

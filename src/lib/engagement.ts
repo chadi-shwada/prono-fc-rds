@@ -28,30 +28,31 @@ export async function getEngagement(userId: string): Promise<Engagement> {
   const predicted = new Set(preds.map((p) => p.matchId));
   const today = dayKey(now);
 
+  // dayKey() calculé une seule fois par match (évite ~3 recalculs/match ci-dessous).
+  const withDay = matches.map((m) => ({ ...m, day: dayKey(m.kickoff) }));
+
   // Matchs du jour, jouables et pas encore commencés.
-  const todayOpen = matches.filter(
-    (m) =>
-      m.homeTeamId &&
-      m.awayTeamId &&
-      m.kickoff > now &&
-      dayKey(m.kickoff) === today,
+  const todayOpen = withDay.filter(
+    (m) => m.homeTeamId && m.awayTeamId && m.kickoff > now && m.day === today,
   );
   const todayToPredict = todayOpen.filter((m) => !predicted.has(m.id)).length;
 
-  const next = matches.find((m) => m.homeTeamId && m.awayTeamId && m.kickoff > now);
+  const next = withDay.find((m) => m.homeTeamId && m.awayTeamId && m.kickoff > now);
 
   // Série : journées déjà entamées (kickoff passé), de la plus récente vers le
   // passé, comptées tant que l'utilisateur a pronostiqué ≥1 match du jour.
-  const startedDays = [
-    ...new Set(matches.filter((m) => m.kickoff <= now).map((m) => dayKey(m.kickoff))),
-  ].sort();
+  // On indexe d'abord, par journée, s'il existe ≥1 prono de l'utilisateur.
+  const startedDaySet = new Set<string>();
+  const participatedDays = new Set<string>();
+  for (const m of withDay) {
+    if (m.kickoff > now) continue;
+    startedDaySet.add(m.day);
+    if (predicted.has(m.id)) participatedDays.add(m.day);
+  }
+  const startedDays = [...startedDaySet].sort();
   let streak = 0;
   for (let i = startedDays.length - 1; i >= 0; i--) {
-    const d = startedDays[i];
-    const participated = matches.some(
-      (m) => dayKey(m.kickoff) === d && predicted.has(m.id),
-    );
-    if (participated) streak++;
+    if (participatedDays.has(startedDays[i])) streak++;
     else break;
   }
 

@@ -136,16 +136,19 @@ export async function runNotifications(): Promise<void> {
         m.predictions.map((p) =>
           sendToUser(p.userId, {
             title: "Résultat ⚽",
-            body: `${label} · tu marques ${p.points ?? 0} pt${(p.points ?? 0) > 1 ? "s" : ""} !`,
+            body: `${label} · tu marques ${p.points ?? 0} pt${(p.points ?? 0) !== 1 ? "s" : ""} !`,
             url: `/matchs/${m.id}`,
           }),
         ),
       );
     }
     if (discordOn) {
+      // Best-effort : un échec Discord ne doit pas empêcher de poser
+      // resultNotifiedAt ci-dessous (sinon les push résultats repartiraient
+      // en double à la synchro suivante).
       await postToDiscord(
         `⚽ **${label}** — terminé ! Classement à jour 👉 ${siteUrl()}/classement`,
-      );
+      ).catch(() => {});
     }
     await prisma.match.update({
       where: { id: m.id },
@@ -192,9 +195,10 @@ export async function runNotifications(): Promise<void> {
         );
       }
       if (discordOn) {
+        // Best-effort : ne doit pas empêcher de poser reminderSentAt ci-dessous.
         await postToDiscord(
           `⏰ **${label}** commence dans moins d'1h — placez vos pronos ! 👉 ${siteUrl()}/matchs`,
-        );
+        ).catch(() => {});
       }
       await prisma.match.update({
         where: { id: m.id },

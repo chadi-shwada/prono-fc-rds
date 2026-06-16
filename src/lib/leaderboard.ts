@@ -23,29 +23,25 @@ export async function getLeaderboard(): Promise<LeaderboardRow[]> {
     prisma.championPrediction.findMany({
       select: { userId: true, points: true },
     }),
-    prisma.prediction.findMany({
-      where: { match: { status: MATCH_STATUS.FINISHED } },
-      select: {
-        userId: true,
-        homeScore: true,
-        awayScore: true,
-        match: { select: { homeScore: true, awayScore: true } },
-      },
-    }),
+    // Comptage des scores exacts directement en base (JOIN + GROUP BY) plutôt
+    // que de rapatrier toutes les prédictions terminées pour les filtrer en mémoire.
+    prisma.$queryRaw<{ userId: string; n: bigint }[]>`
+      SELECT p."userId" AS "userId", COUNT(*) AS n
+      FROM "Prediction" p
+      JOIN "Match" m ON m.id = p."matchId"
+      WHERE m.status = ${MATCH_STATUS.FINISHED}
+        AND p."homeScore" = m."homeScore"
+        AND p."awayScore" = m."awayScore"
+      GROUP BY p."userId"
+    `,
   ]);
 
   const aggByUser = new Map(predAgg.map((p) => [p.userId, p]));
   const champByUser = new Map(champs.map((c) => [c.userId, c.points ?? 0]));
 
-  const exactByUser = new Map<string, number>();
-  for (const p of exactPreds) {
-    if (
-      p.match.homeScore === p.homeScore &&
-      p.match.awayScore === p.awayScore
-    ) {
-      exactByUser.set(p.userId, (exactByUser.get(p.userId) ?? 0) + 1);
-    }
-  }
+  const exactByUser = new Map<string, number>(
+    exactPreds.map((r) => [r.userId, Number(r.n)]),
+  );
 
   const rows: LeaderboardRow[] = users.map((u) => {
     const agg = aggByUser.get(u.id);
