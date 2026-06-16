@@ -2,7 +2,6 @@ import Link from "next/link";
 import { logoutAction } from "@/app/actions/auth";
 import type { SessionUser } from "@/lib/auth";
 import NavLinks from "@/components/NavLinks";
-import MobileMenu from "@/components/MobileMenu";
 import Logo from "@/components/Logo";
 import { appName } from "@/lib/features";
 
@@ -18,7 +17,7 @@ export default function NavBar({ user }: { user: SessionUser }) {
             size={28}
             className="transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110"
           />
-          <span className="hidden sm:inline">{appName()}</span>
+          <span>{appName()}</span>
         </Link>
 
         <NavLinks isAdmin={user.isAdmin} />
@@ -39,8 +38,6 @@ export default function NavBar({ user }: { user: SessionUser }) {
             </button>
           </form>
         </div>
-
-        <MobileMenu isAdmin={user.isAdmin} name={user.name} />
       </nav>
     </header>
   );

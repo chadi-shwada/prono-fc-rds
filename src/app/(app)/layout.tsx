@@ -34,7 +34,7 @@ export default async function AppLayout({
           Coupe du Monde 2026 · {appTagline()}
         </span>
       </footer>
-      <BottomNav />
+      <BottomNav isAdmin={user.isAdmin} />
     </div>
   );
 }
