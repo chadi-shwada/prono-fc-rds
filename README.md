@@ -17,6 +17,20 @@ npx prisma db seed          # données de démarrage (admin, code, démo)
 npm run dev                 # http://localhost:3000
 ```
 
+## Qualité
+
+Avant d'ouvrir une PR ou de déployer, lance au minimum :
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+```
+
+Le script de test exécute les fichiers `*.test.ts` avec le runner natif Node et
+`tsx`. La glob n'est pas entourée de guillemets afin d'être développée par le
+shell et de ne pas être interprétée comme un chemin littéral.
+
 ### Identifiants de démarrage (à changer !)
 
 - **Admin** : `chadi` / `admin1234`
@@ -61,9 +75,23 @@ prisma/
   seed.ts           données de démarrage
 ```
 
-## Déploiement (Vercel)
+## Déploiement
+
+Le chemin recommandé est le déploiement **VPS + Docker + HTTPS** documenté dans
+[`DEPLOY.md`](DEPLOY.md). Il conserve SQLite dans un volume Docker persistant et
+évite d'avoir deux schémas Prisma différents entre le local et la production.
+
+### Variante Vercel / Postgres
+
+Si tu préfères Vercel, crée une branche de déploiement dédiée et fais-y
+explicitement la bascule Prisma vers Postgres :
 
 1. Créer une base **Postgres** (Neon / Vercel Postgres / Supabase).
-2. Dans `prisma/schema.prisma`, passer `provider = "postgresql"`.
-3. Renseigner `DATABASE_URL`, `APP_SECRET`, `FOOTBALL_API_KEY` dans les variables Vercel.
-4. `npx prisma migrate deploy` puis déployer.
+2. Dans `prisma/schema.prisma`, passer `provider = "postgresql"` sur cette
+   branche uniquement.
+3. Renseigner `DATABASE_URL`, `APP_SECRET`, `CRON_SECRET` et `FOOTBALL_API_KEY`
+   dans les variables Vercel.
+4. Lancer `npx prisma migrate deploy` au déploiement.
+
+Évite de changer le provider directement sur la branche principale si tu
+continues à développer et tester en SQLite local.
