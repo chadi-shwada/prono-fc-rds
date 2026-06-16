@@ -14,6 +14,7 @@ const BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world";
 type TeamRef = { id?: string | number; abbreviation?: string; displayName?: string };
 type StatusType = {
   state?: string;
+  name?: string;
   detail?: string;
   shortDetail?: string;
   description?: string;
@@ -257,9 +258,15 @@ async function fetchEspnMatchDetail(
     null;
 
   // Horloge de jeu (temps additionnel inclus) pour la pastille « En direct ».
-  const clock = parseClockText(
-    event.status?.displayClock ?? headerComp?.status?.displayClock,
-  );
+  // À la mi-temps, l'horloge est figée : on affiche « Mi-temps » à la place.
+  const isHalftime =
+    event.status?.type?.name === "STATUS_HALFTIME" ||
+    /half-?time|mi-temps|\bHT\b/i.test(statusDetail ?? "");
+  const clock = isHalftime
+    ? "Mi-temps"
+    : parseClockText(
+        event.status?.displayClock ?? headerComp?.status?.displayClock,
+      );
 
   // Fil du match : buts, cartons et remplacements (keyEvents, sinon scoringPlays
   // pour les seuls buts), classés et triés par minute.

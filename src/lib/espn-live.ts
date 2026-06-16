@@ -23,10 +23,26 @@ type EspnCompetitor = {
   score?: string;
   winner?: boolean;
 };
+type EspnStatusType = {
+  state?: string;
+  name?: string;
+  description?: string;
+  detail?: string;
+  shortDetail?: string;
+};
 type EspnEvent = {
-  status?: { type?: { state?: string }; displayClock?: string };
+  status?: { type?: EspnStatusType; displayClock?: string };
   competitions?: { competitors?: EspnCompetitor[] }[];
 };
+
+/** Mi-temps (ou autre pause de jeu) d'après le statut ESPN. */
+function isHalftime(t: EspnStatusType | undefined): boolean {
+  if (!t) return false;
+  if (t.name === "STATUS_HALFTIME") return true;
+  return /half-?time|mi-temps|\bHT\b/i.test(
+    `${t.description ?? ""} ${t.detail ?? ""} ${t.shortDetail ?? ""}`,
+  );
+}
 
 /** Minute de jeu depuis "45'" / "90+2'" → entier borné, sinon null. */
 function parseClock(clock: string | undefined): number | null {
@@ -92,10 +108,12 @@ async function fetchEspnEvents(): Promise<{
     const byCode = scoresByCode(comps);
     if (!byCode) continue;
     if (state === "in") {
+      // À la mi-temps, l'horloge est figée à 45' : on affiche « Mi-temps ».
+      const ht = isHalftime(e.status?.type);
       live.push({
         byCode,
-        minute: parseClock(e.status?.displayClock),
-        clock: parseClockText(e.status?.displayClock),
+        minute: ht ? null : parseClock(e.status?.displayClock),
+        clock: ht ? "Mi-temps" : parseClockText(e.status?.displayClock),
       });
     } else if (state === "post") {
       const winnerCode =

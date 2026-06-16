@@ -183,7 +183,9 @@ async function runSync(): Promise<SyncResult> {
         status = MATCH_STATUS.LIVE;
       }
     }
-    const liveMinute = parseMinute(m, status);
+    // football-data marque la mi-temps par le statut "PAUSED".
+    const halftime = m.status === "PAUSED";
+    const liveMinute = halftime ? null : parseMinute(m, status);
     // Vainqueur du match (T.A.B. inclus) d'après l'API.
     let winnerTeamId =
       m.score.winner === "HOME_TEAM"
@@ -235,7 +237,12 @@ async function runSync(): Promise<SyncResult> {
       liveMinute,
       // football-data ne fournit pas le temps additionnel : on met la minute
       // entière (l'overlay ESPN, exécuté juste après, l'enrichit en "90+4").
-      liveClock: liveMinute != null ? String(liveMinute) : null,
+      // À la mi-temps (PAUSED), on affiche « Mi-temps » plutôt qu'un temps figé.
+      liveClock: halftime
+        ? "Mi-temps"
+        : liveMinute != null
+          ? String(liveMinute)
+          : null,
       homeTeamId: homeId,
       awayTeamId: awayId,
       homeScore,

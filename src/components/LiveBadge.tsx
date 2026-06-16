@@ -10,6 +10,8 @@ export default function LiveBadge({
   clock?: string | null;
 }) {
   const label = clock ?? (minute != null ? String(minute) : null);
+  // Une minute numérique reçoit l'apostrophe (90+4'), un libellé texte (Mi-temps) non.
+  const isMinute = label != null && /^\d/.test(label);
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-300">
       <span className="relative flex h-1.5 w-1.5">
@@ -19,8 +21,12 @@ export default function LiveBadge({
       En direct
       {label != null && (
         <>
-          <span aria-hidden className="text-red-200/70">·</span>
-          <span className="font-display tabular-nums text-red-200">{label}&apos;</span>
+          <span aria-hidden className="text-red-200/70">
+            ·
+          </span>
+          <span className="font-display tabular-nums text-red-200">
+            {isMinute ? `${label}'` : label}
+          </span>
         </>
       )}
     </span>
