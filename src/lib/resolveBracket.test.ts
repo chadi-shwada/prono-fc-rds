@@ -25,11 +25,31 @@ test("tableau non joué : tout reste en place de groupe (aucune équipe)", () =>
   assert.equal(right[0].a.team, null);
 });
 
-test("groupe terminé : le 1er et le 2e remplissent leurs cases", () => {
-  // Groupe E : E1 bat E2 → E1 = "1E", E2 = "2E".
+test("groupe terminé : le 1er remplit sa case, marqué comme confirmé", () => {
+  // Groupe E : E1 bat E2 (seul match) → groupe terminé, E1 = "1E".
   const { left } = resolveBracket([group("E", "E1", "E2", 2, 0)]);
   // LEFT_R32[0] = { a: "1E", b: "3 …" } → la case "1E" devient E1.
   assert.equal(left[0].a.team?.name, "E1");
+  assert.equal(left[0].a.team?.provisional, false);
+});
+
+test("groupe en cours : le leader s'affiche en provisoire", () => {
+  // Un match joué, un match à venir → groupe non terminé : E1 mène mais provisoire.
+  const matches = [
+    group("E", "E1", "E2", 2, 0),
+    {
+      stage: STAGES.GROUP,
+      groupName: "E",
+      status: MATCH_STATUS.SCHEDULED,
+      homeScore: null,
+      awayScore: null,
+      homeTeam: T("E1"),
+      awayTeam: T("E3"),
+    },
+  ];
+  const { left } = resolveBracket(matches);
+  assert.equal(left[0].a.team?.name, "E1");
+  assert.equal(left[0].a.team?.provisional, true);
 });
 
 test("le 2e d'un groupe se place dans la bonne affiche", () => {

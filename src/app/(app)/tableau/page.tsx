@@ -127,9 +127,22 @@ export default async function TableauPage() {
       </Reveal>
 
       <Reveal delay={0.15}>
-        <p className="text-center text-xs text-slate-500">
-          1E = 1er du groupe E · 2A = 2e du groupe A · 3 A/B/… = un des meilleurs 3es
-        </p>
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" /> Qualifié
+              (groupe terminé)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-amber-400" /> Provisoire
+              (groupe en cours)
+            </span>
+          </div>
+          <p className="text-center text-xs text-slate-500">
+            1E = 1er du groupe E · 2A = 2e du groupe A · 3 A/B/… = un des meilleurs
+            3es
+          </p>
+        </div>
       </Reveal>
     </div>
   );
@@ -178,12 +191,26 @@ function Side({ place, muted = false }: { place: ResolvedPlace; muted?: boolean 
     muted ? "bg-white/[0.03]" : ""
   }`;
   if (place.team) {
+    const { provisional } = place.team;
     return (
-      <div className={base}>
+      <div
+        className={base}
+        title={
+          provisional
+            ? `${place.label} — classement provisoire (groupe en cours)`
+            : `${place.label} — qualifié`
+        }
+      >
         <Flag code={place.team.code} size={16} className="shrink-0" />
         <span className={`truncate ${muted ? "text-slate-200" : ""}`}>
           {place.team.name}
         </span>
+        <span
+          className={`ml-auto h-1.5 w-1.5 shrink-0 rounded-full ${
+            provisional ? "bg-amber-400" : "bg-emerald-400"
+          }`}
+          aria-hidden
+        />
       </div>
     );
   }
