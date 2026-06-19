@@ -1,7 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import { LEFT_R32, RIGHT_R32, type Slot } from "@/lib/bracket";
 import { STAGES } from "@/lib/constants";
+import {
+  resolveBracket,
+  type ResolvedPlace,
+  type ResolvedAffiche,
+} from "@/lib/resolveBracket";
 import Reveal from "@/components/Reveal";
+import Flag from "@/components/Flag";
 
 export const dynamic = "force-dynamic";
 
@@ -20,15 +25,27 @@ const ROUND_INFO: { stage: string; label: string }[] = [
 ];
 
 export default async function TableauPage() {
-  const knockout = await prisma.match.findMany({
-    where: { stage: { not: STAGES.GROUP } },
-    select: { stage: true, kickoff: true },
+  const matches = await prisma.match.findMany({
+    select: {
+      stage: true,
+      groupName: true,
+      kickoff: true,
+      status: true,
+      homeScore: true,
+      awayScore: true,
+      homeTeam: { select: { id: true, name: true, code: true } },
+      awayTeam: { select: { id: true, name: true, code: true } },
+    },
     orderBy: { kickoff: "asc" },
   });
 
-  // Plage de dates par tour
+  // Affiches résolues en vraies équipes dès qu'elles sont connues.
+  const { left, right } = resolveBracket(matches);
+
+  // Plage de dates par tour (uniquement les phases finales).
   const ranges = new Map<string, { min: Date; max: Date }>();
-  for (const m of knockout) {
+  for (const m of matches) {
+    if (m.stage === STAGES.GROUP) continue;
     const r = ranges.get(m.stage);
     if (!r) ranges.set(m.stage, { min: m.kickoff, max: m.kickoff });
     else if (m.kickoff > r.max) r.max = m.kickoff;
@@ -39,8 +56,8 @@ export default async function TableauPage() {
       <Reveal>
         <h1 className="font-display text-3xl font-extrabold">Tableau final</h1>
         <p className="text-slate-400">
-          Le parcours vers le titre 🏆 — les seizièmes une fois la phase de groupes
-          terminée.
+          Le parcours vers le titre 🏆 — les équipes apparaissent dès qu&apos;elles
+          sont qualifiées, groupe après groupe.
         </p>
       </Reveal>
 
@@ -71,9 +88,9 @@ export default async function TableauPage() {
         <div className="overflow-x-auto pb-3">
           <div className="mx-auto flex h-[620px] w-full min-w-[840px] max-w-[1180px] items-stretch justify-between gap-2">
             {/* Demi-tableau gauche */}
-            <Column label="Seizièmes" minWidth={112}>
-              {LEFT_R32.map((s, i) => (
-                <Affiche key={i} slot={s} />
+            <Column label="Seizièmes" minWidth={132}>
+              {left.map((s, i) => (
+                <Affiche key={i} affiche={s} />
               ))}
             </Column>
             <Column label="Huitièmes">{empties(4)}</Column>
@@ -100,9 +117,9 @@ export default async function TableauPage() {
             <Column label="Demies">{empties(1)}</Column>
             <Column label="Quarts">{empties(2)}</Column>
             <Column label="Huitièmes">{empties(4)}</Column>
-            <Column label="Seizièmes" minWidth={112}>
-              {RIGHT_R32.map((s, i) => (
-                <Affiche key={i} slot={s} />
+            <Column label="Seizièmes" minWidth={132}>
+              {right.map((s, i) => (
+                <Affiche key={i} affiche={s} />
               ))}
             </Column>
           </div>
@@ -146,12 +163,34 @@ function Column({
   );
 }
 
-function Affiche({ slot }: { slot: Slot }) {
+function Affiche({ affiche }: { affiche: ResolvedAffiche }) {
   return (
-    <div className="glass overflow-hidden rounded-lg text-center text-[11px] font-bold text-white shadow-md">
-      <div className="px-2 py-1.5">{slot.a}</div>
+    <div className="glass overflow-hidden rounded-lg text-[11px] font-bold text-white shadow-md">
+      <Side place={affiche.a} />
       <div className="h-px bg-white/10" />
-      <div className="bg-white/[0.03] px-2 py-1.5 text-slate-300">{slot.b}</div>
+      <Side place={affiche.b} muted />
+    </div>
+  );
+}
+
+function Side({ place, muted = false }: { place: ResolvedPlace; muted?: boolean }) {
+  const base = `flex items-center gap-1.5 px-2 py-1.5 ${
+    muted ? "bg-white/[0.03]" : ""
+  }`;
+  if (place.team) {
+    return (
+      <div className={base}>
+        <Flag code={place.team.code} size={16} className="shrink-0" />
+        <span className={`truncate ${muted ? "text-slate-200" : ""}`}>
+          {place.team.name}
+        </span>
+      </div>
+    );
+  }
+  // Équipe pas encore connue : on garde la place de groupe en repli.
+  return (
+    <div className={`${base} justify-center text-slate-400`} title="Pas encore qualifié">
+      {place.label}
     </div>
   );
 }
