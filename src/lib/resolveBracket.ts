@@ -28,7 +28,13 @@ type MatchInput = {
   awayTeam: TeamLite | null;
 };
 
-export type ResolvedTeam = { name: string; code: string | null };
+export type ResolvedTeam = {
+  name: string;
+  code: string | null;
+  // true tant que le groupe n'est pas terminé : la position (1er/2e) peut encore
+  // changer. false = qualification + position acquises (groupe fini ou match R32).
+  provisional: boolean;
+};
 
 /** Une place du tableau : le libellé d'origine, et l'équipe réelle si connue. */
 export type ResolvedPlace = { label: string; team: ResolvedTeam | null };
@@ -62,16 +68,26 @@ export function resolveBracket(matches: MatchInput[]): {
     return !!t && t.total > 0 && t.finished === t.total;
   };
 
-  // place "1E"/"2A"/"3E" → équipe, et id équipe → place, pour les groupes terminés.
+  // place "1E"/"2A" → équipe (1er/2e du classement). On affiche dès qu'un match a
+  // été joué dans le groupe, comme la page Groupes ; tant que le groupe n'est pas
+  // fini, l'équipe est marquée « provisoire ».
   const placeToTeam = new Map<string, ResolvedTeam>();
+  // id équipe → place, RÉSERVÉ aux groupes terminés : sert à rattacher les matchs
+  // R32 (positions définitives uniquement), donc pas de provisoire ici.
   const teamIdToPlace = new Map<string, string>();
   for (const g of standings) {
-    if (!isComplete(g.group)) continue;
+    const complete = isComplete(g.group);
+    g.rows.slice(0, 2).forEach((row, i) => {
+      if (row.played === 0) return; // rien joué → pas d'info fiable
+      placeToTeam.set(`${i + 1}${g.group}`, {
+        name: row.name,
+        code: row.code,
+        provisional: !complete,
+      });
+    });
+    if (!complete) continue;
     g.rows.slice(0, 3).forEach((row, i) => {
-      const place = `${i + 1}${g.group}`;
-      const team = { name: row.name, code: row.code };
-      placeToTeam.set(place, team);
-      teamIdToPlace.set(row.teamId, place);
+      teamIdToPlace.set(row.teamId, `${i + 1}${g.group}`);
     });
   }
 
@@ -112,8 +128,16 @@ export function resolveBracket(matches: MatchInput[]): {
     const slot = anchorToSlot.get(anchor);
     if (!slot) continue;
 
-    const home: ResolvedTeam = { name: m.homeTeam.name, code: m.homeTeam.code };
-    const away: ResolvedTeam = { name: m.awayTeam.name, code: m.awayTeam.code };
+    const home: ResolvedTeam = {
+      name: m.homeTeam.name,
+      code: m.homeTeam.code,
+      provisional: false,
+    };
+    const away: ResolvedTeam = {
+      name: m.awayTeam.name,
+      code: m.awayTeam.code,
+      provisional: false,
+    };
     const dst = resolved[slot.half][slot.i];
     // L'ancre occupe le côté correspondant ; l'adversaire prend l'autre.
     if (slot.s.a === anchor) {
