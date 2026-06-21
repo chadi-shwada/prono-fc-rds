@@ -1,4 +1,4 @@
-import { type CSSProperties } from "react";
+import { Suspense, type CSSProperties } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { dayKey, formatDayLabel, formatTime } from "@/lib/format";
@@ -8,6 +8,7 @@ import Reveal from "@/components/Reveal";
 import Flag from "@/components/Flag";
 import LiveBadge from "@/components/LiveBadge";
 import LiveScore from "@/components/LiveScore";
+import EspnLiveScore from "@/components/EspnLiveScore";
 import LiveRefresher from "@/components/LiveRefresher";
 
 export const dynamic = "force-dynamic";
@@ -120,11 +121,32 @@ function MatchRow({ match: m }: { match: MatchWithTeams }) {
       </span>
 
       {live ? (
-        <LiveScore
-          home={m.homeScore}
-          away={m.awayScore}
-          className="shrink-0 px-2 py-0.5 text-sm"
-        />
+        m.homeTeam?.code && m.awayTeam?.code ? (
+          <Suspense
+            fallback={
+              <LiveScore
+                home={m.homeScore}
+                away={m.awayScore}
+                className="shrink-0 px-2 py-0.5 text-sm"
+              />
+            }
+          >
+            <EspnLiveScore
+              homeCode={m.homeTeam.code}
+              awayCode={m.awayTeam.code}
+              kickoff={m.kickoff}
+              fallbackHome={m.homeScore}
+              fallbackAway={m.awayScore}
+              className="shrink-0 px-2 py-0.5 text-sm"
+            />
+          </Suspense>
+        ) : (
+          <LiveScore
+            home={m.homeScore}
+            away={m.awayScore}
+            className="shrink-0 px-2 py-0.5 text-sm"
+          />
+        )
       ) : (
         <span className="shrink-0 rounded-md bg-white/10 px-2 py-0.5 text-center font-display text-sm font-bold">
           {finished ? `${m.homeScore} - ${m.awayScore}` : "vs"}
