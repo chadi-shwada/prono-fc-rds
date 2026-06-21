@@ -1,4 +1,4 @@
-import { type CSSProperties } from "react";
+import { Suspense, type CSSProperties } from "react";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -12,6 +12,7 @@ import Flag from "@/components/Flag";
 import ScoreReveal from "@/components/ScoreReveal";
 import LiveBadge from "@/components/LiveBadge";
 import LiveScore from "@/components/LiveScore";
+import EspnLiveScore from "@/components/EspnLiveScore";
 import LiveRefresher from "@/components/LiveRefresher";
 
 export const dynamic = "force-dynamic";
@@ -267,6 +268,7 @@ export default async function MatchsPage({
                       <LockedMatch
                         home={home}
                         away={away}
+                        kickoff={m.kickoff}
                         finished={finished}
                         live={m.status === MATCH_STATUS.LIVE}
                         homeScore={m.homeScore}
@@ -311,6 +313,7 @@ function TbdMatch() {
 function LockedMatch({
   home,
   away,
+  kickoff,
   finished,
   live,
   homeScore,
@@ -319,6 +322,7 @@ function LockedMatch({
 }: {
   home: TeamInfo;
   away: TeamInfo;
+  kickoff: Date;
   finished: boolean;
   live: boolean;
   homeScore: number | null;
@@ -334,11 +338,32 @@ function LockedMatch({
           <Flag code={home.code} size={34} className="shrink-0" />
         </span>
         {live ? (
-          <LiveScore
-            home={homeScore}
-            away={awayScore}
-            className="shrink-0 text-base"
-          />
+          home.code && away.code ? (
+            <Suspense
+              fallback={
+                <LiveScore
+                  home={homeScore}
+                  away={awayScore}
+                  className="shrink-0 text-base"
+                />
+              }
+            >
+              <EspnLiveScore
+                homeCode={home.code}
+                awayCode={away.code}
+                kickoff={kickoff}
+                fallbackHome={homeScore}
+                fallbackAway={awayScore}
+                className="shrink-0 text-base"
+              />
+            </Suspense>
+          ) : (
+            <LiveScore
+              home={homeScore}
+              away={awayScore}
+              className="shrink-0 text-base"
+            />
+          )
         ) : (
           <span className="shrink-0 rounded-lg bg-white/10 px-3 py-1 font-display text-base font-bold">
             {finished ? (

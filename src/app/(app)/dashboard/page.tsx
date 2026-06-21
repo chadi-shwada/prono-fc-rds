@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -14,6 +15,7 @@ import Flag from "@/components/Flag";
 import Avatar from "@/components/Avatar";
 import LiveBadge from "@/components/LiveBadge";
 import LiveScore from "@/components/LiveScore";
+import EspnLiveScore from "@/components/EspnLiveScore";
 import LiveRefresher from "@/components/LiveRefresher";
 import { MATCH_STATUS } from "@/lib/constants";
 
@@ -209,11 +211,32 @@ export default async function HomePage() {
                       <Flag code={m.homeTeam?.code} size={28} className="shrink-0" />
                     </span>
                     <span className="flex shrink-0 items-center gap-2">
-                      <LiveScore
-                        home={m.homeScore}
-                        away={m.awayScore}
-                        className="text-sm"
-                      />
+                      {m.homeTeam && m.awayTeam ? (
+                        <Suspense
+                          fallback={
+                            <LiveScore
+                              home={m.homeScore}
+                              away={m.awayScore}
+                              className="text-sm"
+                            />
+                          }
+                        >
+                          <EspnLiveScore
+                            homeCode={m.homeTeam.code}
+                            awayCode={m.awayTeam.code}
+                            kickoff={m.kickoff}
+                            fallbackHome={m.homeScore}
+                            fallbackAway={m.awayScore}
+                            className="text-sm"
+                          />
+                        </Suspense>
+                      ) : (
+                        <LiveScore
+                          home={m.homeScore}
+                          away={m.awayScore}
+                          className="text-sm"
+                        />
+                      )}
                       {(m.liveClock ?? m.liveMinute) != null && (
                         <span className="font-display text-xs tabular-nums text-red-300">
                           {m.liveClock ?? m.liveMinute}&apos;
