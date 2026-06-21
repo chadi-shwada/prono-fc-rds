@@ -77,6 +77,41 @@ type LiveScore = {
 };
 type FinalScore = { byCode: Map<string, number>; winnerCode: string | null };
 
+export type FinalizeDecision = "skip" | "hold" | "finalize";
+
+/**
+ * Que faire quand ESPN affiche « Full Time » (state "post") pour un match ?
+ *
+ *  - "skip"     : match déjà terminé avec exactement ce score → rien à faire.
+ *  - "hold"     : score final vu pour la 1ʳᵉ fois sur un match pas encore
+ *                 terminé → on l'enregistre (statut LIVE conservé) et on attend
+ *                 la synchro suivante pour CONFIRMER avant de figer.
+ *  - "finalize" : score déjà enregistré (donc confirmé sur 2 synchros) OU
+ *                 correction d'un match déjà terminé → on fige en « terminé »
+ *                 + recalcul des points.
+ *
+ * Le palier "hold" évite de figer — et donc de notifier, ce qui est
+ * irréversible — sur un score transitoire : but de dernière seconde ou but
+ * accordé puis annulé par la VAR au coup de sifflet. Cas normal (buts vus en
+ * direct au fil du match) : le score est déjà enregistré, donc "finalize"
+ * immédiat, sans latence.
+ */
+export function finalizationDecision(args: {
+  status: string;
+  storedHome: number | null;
+  storedAway: number | null;
+  finalHome: number;
+  finalAway: number;
+}): FinalizeDecision {
+  const { status, storedHome, storedAway, finalHome, finalAway } = args;
+  const scoreMatchesStored =
+    storedHome === finalHome && storedAway === finalAway;
+  const isFinished = status === MATCH_STATUS.FINISHED;
+  if (isFinished && scoreMatchesStored) return "skip";
+  if (!isFinished && !scoreMatchesStored) return "hold";
+  return "finalize";
+}
+
 /** Construit la map code→score pour un événement, ou null si invalide. */
 function scoresByCode(comps: EspnCompetitor[]): Map<string, number> | null {
   const byCode = new Map<string, number>();
@@ -173,21 +208,41 @@ export async function overlayEspnLiveScores(
     const home = f.byCode.get(hc);
     const away = f.byCode.get(ac);
     if (home == null || away == null) continue;
+
+    const decision = finalizationDecision({
+      status: match.status,
+      storedHome: match.homeScore,
+      storedAway: match.awayScore,
+      finalHome: home,
+      finalAway: away,
+    });
+
+    // Déjà finalisé avec le même score → rien à faire (évite un recalcul inutile).
+    if (decision === "skip") continue;
+
+    // Score final vu pour la 1ʳᵉ fois : on l'enregistre en gardant « en direct »
+    // et on attend la synchro suivante pour confirmer (cf. finalizationDecision).
+    // ESPN « Full Time » fait autorité : on laisse le score baisser si besoin
+    // (but annulé), d'où l'écriture directe sans l'anti-régression du live.
+    if (decision === "hold") {
+      await prisma.match.update({
+        where: { id: match.id },
+        data: {
+          homeScore: home,
+          awayScore: away,
+          status: MATCH_STATUS.LIVE,
+        },
+      });
+      updated++;
+      continue;
+    }
+
     const winnerTeamId =
       f.winnerCode === hc
         ? match.homeTeamId
         : f.winnerCode === ac
           ? match.awayTeamId
           : null;
-
-    // Déjà finalisé avec le même score → rien à faire (évite un recalcul inutile).
-    if (
-      match.status === MATCH_STATUS.FINISHED &&
-      match.homeScore === home &&
-      match.awayScore === away
-    ) {
-      continue;
-    }
 
     await prisma.match.update({
       where: { id: match.id },
