@@ -3,6 +3,7 @@ import { recomputeMatchPoints } from "@/lib/scoring";
 import { teamNameFr } from "@/lib/teamNames";
 import { importVenues } from "@/lib/venues";
 import { overlayEspnLiveScores } from "@/lib/espn-live";
+import { seedSchedule, findKoScheduleNum } from "@/lib/schedule";
 import { STAGES, MATCH_STATUS } from "@/lib/constants";
 
 // Intégration football-data.org (v4) — compétition "WC" (Coupe du Monde).
@@ -141,6 +142,11 @@ async function runSync(): Promise<SyncResult> {
     );
   }
 
+  // Garantit le calendrier complet (104 matchs) avant tout : même si l'API est
+  // incomplète (phases finales absentes du plan gratuit), le calendrier reste
+  // affiché ; la synchro ne fait ensuite qu'enrichir ces matchs.
+  await seedSchedule(prisma);
+
   const res = await fetch(`${BASE}/competitions/WC/matches`, {
     headers: { "X-Auth-Token": key },
     cache: "no-store",
@@ -174,6 +180,7 @@ async function runSync(): Promise<SyncResult> {
     const awayId = localId(m.awayTeam);
 
     const kickoff = new Date(m.utcDate);
+    const stage = STAGE_MAP[m.stage] ?? STAGES.GROUP;
     let status = mapStatus(m.status);
     // Si le match a commencé et que l'API ne le dit pas (encore) terminé, on force
     // « En direct » pour stabiliser le badge malgré le flapping de l'API gratuite.
@@ -196,9 +203,21 @@ async function runSync(): Promise<SyncResult> {
     let homeScore = m.score.fullTime.home;
     let awayScore = m.score.fullTime.away;
 
-    const existing = await prisma.match.findUnique({
+    // Recherche du match en base. Voie rapide : par externalId (matchs déjà
+    // synchronisés). Sinon ADOPTION : un match à élimination directe revenu de
+    // l'API est rattaché au match seedé « à déterminer » du même créneau (via son
+    // numéro de calendrier), pour le remplir au lieu de créer un doublon.
+    let existing = await prisma.match.findUnique({
       where: { externalId: String(m.id) },
     });
+    if (!existing) {
+      const num = findKoScheduleNum(stage, kickoff);
+      if (num != null) {
+        existing = await prisma.match.findFirst({
+          where: { scheduleNum: num, externalId: null },
+        });
+      }
+    }
 
     // Anti-régression du score en direct : l'API gratuite renvoie par moments une
     // réponse périmée (ex. 0-0 alors qu'un but a déjà été marqué), ce qui faisait
@@ -230,7 +249,7 @@ async function runSync(): Promise<SyncResult> {
     }
 
     const fields = {
-      stage: STAGE_MAP[m.stage] ?? STAGES.GROUP,
+      stage,
       groupName: parseGroup(m.group),
       kickoff,
       status,
@@ -249,11 +268,17 @@ async function runSync(): Promise<SyncResult> {
       awayScore,
       winnerTeamId,
     };
-    const saved = await prisma.match.upsert({
-      where: { externalId: String(m.id) },
-      update: fields,
-      create: { externalId: String(m.id), ...fields },
-    });
+    // Update par id (en adoptant l'externalId si le match était seedé « à
+    // déterminer ») ou création si vraiment inconnu. On ne touche pas à
+    // scheduleNum ni venueCity (posés au seed).
+    const saved = existing
+      ? await prisma.match.update({
+          where: { id: existing.id },
+          data: { ...fields, externalId: String(m.id) },
+        })
+      : await prisma.match.create({
+          data: { externalId: String(m.id), ...fields },
+        });
 
     if (status === MATCH_STATUS.FINISHED) {
       await recomputeMatchPoints(saved.id);

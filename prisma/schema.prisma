@@ -83,6 +83,11 @@ model Team {
 model Match {
   id         String   @id @default(cuid())
   externalId String?  @unique // id côté API foot
+  // Numéro officiel du match (1..104) issu du calendrier local wc2026-schedule.json.
+  // Sert d'ancre stable pour seeder l'intégralité du calendrier (matchs à élimination
+  // directe inclus, « à déterminer ») même si l'API gratuite ne les renvoie pas encore,
+  // et pour rattacher (adopter) un match API au bon créneau sans créer de doublon.
+  scheduleNum Int?    @unique
   stage      String // GROUP, R32, R16, QF, SF, THIRD, FINAL (voir constants.ts)
   groupName  String? // pour la phase de groupes
   kickoff    DateTime // coup d'envoi (verrouillage des pronos)

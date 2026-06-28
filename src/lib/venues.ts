@@ -5,7 +5,7 @@ import schedule from "../data/wc2026-schedule.json";
 // en reliant chaque match à sa ville hôte (HOST_CITIES). Idempotent.
 
 // Nom anglais (openfootball) -> code FIFA (= code en base).
-const EN_TO_CODE: Record<string, string> = {
+export const EN_TO_CODE: Record<string, string> = {
   Algeria: "ALG", Argentina: "ARG", Australia: "AUS", Austria: "AUT",
   Belgium: "BEL", "Bosnia & Herzegovina": "BIH", Brazil: "BRA", Canada: "CAN",
   "Cape Verde": "CPV", Colombia: "COL", Croatia: "CRO", "Curaçao": "CUW",
@@ -20,7 +20,7 @@ const EN_TO_CODE: Record<string, string> = {
 };
 
 // Lieu (openfootball) -> id de HOST_CITIES.
-const GROUND_TO_CITY: Record<string, string> = {
+export const GROUND_TO_CITY: Record<string, string> = {
   "Mexico City": "mex",
   "Guadalajara (Zapopan)": "gua",
   Atlanta: "atl",
@@ -39,7 +39,7 @@ const GROUND_TO_CITY: Record<string, string> = {
   "Dallas (Arlington)": "dal",
 };
 
-function toUTC(date: string, time: string): string | null {
+export function toUTC(date: string, time: string): string | null {
   const mt = time.match(/(\d{2}):(\d{2})\s*UTC([+-]\d+)/);
   if (!mt) return null;
   const [, h, mi, off] = mt;
