@@ -4,6 +4,7 @@ import { teamNameFr } from "@/lib/teamNames";
 import { importVenues } from "@/lib/venues";
 import { overlayEspnLiveScores } from "@/lib/espn-live";
 import { seedSchedule, findKoScheduleNum } from "@/lib/schedule";
+import { resolveKnockoutTeams } from "@/lib/resolveKnockout";
 import { STAGES, MATCH_STATUS } from "@/lib/constants";
 
 // Intégration football-data.org (v4) — compétition "WC" (Coupe du Monde).
@@ -81,6 +82,8 @@ export type SyncResult = {
   finishedRecomputed: number;
   /** Nombre de matchs dont le score live a été enrichi via ESPN. */
   espnLive: number;
+  /** Nombre d'affiches KO dont une équipe a été résolue localement. */
+  koResolved: number;
 };
 
 /**
@@ -293,10 +296,16 @@ async function runSync(): Promise<SyncResult> {
   // Best-effort : en cas d'échec, on garde les données football-data.
   const espnLive = await overlayEspnLiveScores(prisma);
 
+  // Remplit les affiches à élimination directe à partir de NOS résultats
+  // (1er/2e de groupe, vainqueurs/perdants des tours précédents), sans dépendre
+  // de l'API. Les « meilleurs 3es » restent à déterminer (cf. resolveKnockout).
+  const ko = await resolveKnockoutTeams(prisma);
+
   return {
     teams: uniqueTeams.size,
     matches: matches.length,
     finishedRecomputed: recomputed,
     espnLive,
+    koResolved: ko.resolved,
   };
 }

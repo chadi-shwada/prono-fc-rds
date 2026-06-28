@@ -1,4 +1,5 @@
-import { MATCH_STATUS, STAGES } from "@/lib/constants";
+// Import relatif (pas d'alias @/) pour rester testable via tsx, comme scoring-core.
+import { MATCH_STATUS, STAGES } from "./constants";
 
 // Classement des groupes calculé À PARTIR DE NOS MATCHS (base SQLite), sans appel
 // API supplémentaire : toujours cohérent avec les scores qu'on affiche, et marche
