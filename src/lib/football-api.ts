@@ -65,9 +65,37 @@ type ApiMatch = {
   score: {
     // winner: vainqueur du match (T.A.B. inclus) — HOME_TEAM / AWAY_TEAM / DRAW / null
     winner: string | null;
+    // ⚠️ fullTime INCLUT les T.A.B. : football-data ajoute les tirs au but au score
+    // du terrain (doc officielle : temps réglementaire 1-1 + t.a.b. 6-5 → fullTime
+    // 7-6). Pour le barème, on veut le score du terrain → on retire `penalties`.
+    duration?: string | null;
     fullTime: { home: number | null; away: number | null };
+    penalties?: { home: number | null; away: number | null } | null;
   };
 };
+
+/**
+ * Score du terrain (fin du temps réglementaire/prolongation), T.A.B. EXCLUS.
+ *
+ * football-data plie les tirs au but dans `fullTime` (ex. 1-1 a.p. puis 4-2 t.a.b.
+ * → `fullTime` 5-3). Or le barème note le pronostic sur le score du jeu, pas sur
+ * l'issue des T.A.B. (le vainqueur des T.A.B. est porté par `winnerTeamId`). On
+ * soustrait donc les penalties de `fullTime` (fullTime = réglementaire + prolong.
+ * + penalties). Sans T.A.B., `fullTime` est déjà le bon score.
+ */
+export function pitchScoreFromApi(score: ApiMatch["score"]): {
+  home: number | null;
+  away: number | null;
+} {
+  const { fullTime, penalties } = score;
+  if (fullTime.home == null || fullTime.away == null || !penalties) {
+    return { home: fullTime.home, away: fullTime.away };
+  }
+  return {
+    home: fullTime.home - (penalties.home ?? 0),
+    away: fullTime.away - (penalties.away ?? 0),
+  };
+}
 
 /** Minute de jeu en cours, ou null (hors match en direct / absente de l'API). */
 function parseMinute(m: ApiMatch, status: string): number | null {
@@ -203,8 +231,11 @@ async function runSync(): Promise<SyncResult> {
         : m.score.winner === "AWAY_TEAM"
           ? awayId
           : null;
-    let homeScore = m.score.fullTime.home;
-    let awayScore = m.score.fullTime.away;
+    // Score du terrain (T.A.B. retirés) — sinon un prono exact 1-1 perdrait ses
+    // points dès l'arrivée des tirs au but, qui ne concernent que `winnerTeamId`.
+    const pitch = pitchScoreFromApi(m.score);
+    let homeScore = pitch.home;
+    let awayScore = pitch.away;
 
     // Recherche du match en base. Voie rapide : par externalId (matchs déjà
     // synchronisés). Sinon ADOPTION : un match à élimination directe revenu de
