@@ -45,7 +45,7 @@ export default async function EspnMatchInsights({
     <div className="flex flex-col gap-4">
       {/* Tirs au but (phase finale) */}
       {shootout && (
-        <div className="glass rounded-2xl p-4">
+        <div className="glass rounded-2xl p-4 text-center">
           <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
             Tirs au but
           </div>
