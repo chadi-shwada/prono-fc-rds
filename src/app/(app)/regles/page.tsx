@@ -62,13 +62,18 @@ export default function ReglesPage() {
       <Reveal delay={0.13}>
         <Section title="⏱️ Prolongations & tirs au but">
           <p>
-            Pour les matchs à élimination directe, on retient le{" "}
-            <strong>score final publié</strong>{" "}
-            (prolongation comprise). En cas de match nul réglé aux{" "}
-            <strong>tirs au but</strong>, c&apos;est le{" "}
-            <strong>vainqueur qualifié</strong>{" "}
-            qui compte pour le bonus — même si l&apos;affiche reste à égalité
-            au tableau.
+            Pour les matchs à élimination directe, on retient le score à la{" "}
+            <strong>fin du jeu</strong> — prolongation comprise, mais{" "}
+            <strong>tirs au but exclus</strong>. Un match qui se termine à
+            égalité puis se décide aux tirs au but reste donc un{" "}
+            <strong>match nul</strong> pour le barème&nbsp;: si tu as
+            pronostiqué ce nul, tu gardes tes points.
+          </p>
+          <p className="mt-2">
+            Les tirs au but servent uniquement à désigner l&apos;équipe{" "}
+            <strong>qualifiée</strong>{" "}
+            (et comptent pour le bonus vainqueur final) — ils ne changent pas
+            le score du match.
           </p>
         </Section>
       </Reveal>
