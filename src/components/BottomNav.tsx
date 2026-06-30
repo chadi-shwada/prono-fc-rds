@@ -45,7 +45,7 @@ export default function BottomNav({ isAdmin = false }: { isAdmin?: boolean }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setOpen(false)}
-              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+              className="fixed inset-0 z-40 bg-black/70 md:hidden"
             />
             <motion.div
               initial={{ opacity: 0, y: 40 }}
@@ -53,7 +53,7 @@ export default function BottomNav({ isAdmin = false }: { isAdmin?: boolean }) {
               exit={{ opacity: 0, y: 40 }}
               transition={{ type: "spring", stiffness: 380, damping: 32 }}
               role="menu"
-              className="fixed inset-x-3 z-50 rounded-2xl border border-white/10 bg-slate-900/95 p-4 shadow-2xl shadow-black/60 backdrop-blur md:hidden"
+              className="fixed inset-x-3 z-50 rounded-2xl border border-white/10 bg-slate-900/95 p-4 shadow-2xl shadow-black/60 md:hidden"
               style={{ bottom: "calc(4.75rem + env(safe-area-inset-bottom))" }}
             >
               <div className="mb-3 flex items-center justify-between">
@@ -107,7 +107,7 @@ export default function BottomNav({ isAdmin = false }: { isAdmin?: boolean }) {
 
       <nav
         aria-label="Navigation principale"
-        className="fixed inset-x-3 z-50 rounded-2xl border border-white/10 bg-slate-950/90 shadow-lg shadow-black/50 backdrop-blur md:hidden"
+        className="fixed inset-x-3 z-50 rounded-2xl border border-white/10 bg-slate-950/95 shadow-lg shadow-black/50 md:hidden"
         style={{ bottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}
       >
         <ul className="mx-auto flex max-w-md items-stretch">
