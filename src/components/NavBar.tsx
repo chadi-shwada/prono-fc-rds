@@ -7,7 +7,7 @@ import { appName } from "@/lib/features";
 
 export default function NavBar({ user }: { user: SessionUser }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/80 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/95">
       <nav className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-10">
         <Link
           href="/dashboard"
