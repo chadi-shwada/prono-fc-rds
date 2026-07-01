@@ -27,6 +27,7 @@ const ROUND_INFO: { stage: string; label: string }[] = [
 export default async function TableauPage() {
   const matches = await prisma.match.findMany({
     select: {
+      scheduleNum: true,
       stage: true,
       groupName: true,
       kickoff: true,
@@ -41,6 +42,21 @@ export default async function TableauPage() {
 
   // Affiches résolues en vraies équipes dès qu'elles sont connues.
   const { left, right } = resolveBracket(matches);
+
+  // Tours suivants (8es → finale) : lus directement depuis nos matchs, dont les
+  // équipes sont remplies par resolveKnockoutTeams (vainqueur d'un tour → tour
+  // suivant). Numéros de calendrier officiels, ordonnés pour aligner le bracket.
+  const byNum = new Map(
+    matches.flatMap((m) => (m.scheduleNum != null ? [[m.scheduleNum, m]] : [])),
+  );
+  const koAffiche = (num: number): ResolvedAffiche => {
+    const m = byNum.get(num);
+    const side = (t: { name: string; code: string | null } | null): ResolvedPlace => ({
+      label: "—",
+      team: t ? { name: t.name, code: t.code, provisional: false } : null,
+    });
+    return { a: side(m?.homeTeam ?? null), b: side(m?.awayTeam ?? null) };
+  };
 
   // Plage de dates par tour (uniquement les phases finales).
   const ranges = new Map<string, { min: Date; max: Date }>();
@@ -93,9 +109,21 @@ export default async function TableauPage() {
                 <Affiche key={i} affiche={s} />
               ))}
             </Column>
-            <Column label="Huitièmes">{empties(4)}</Column>
-            <Column label="Quarts">{empties(2)}</Column>
-            <Column label="Demies">{empties(1)}</Column>
+            <Column label="Huitièmes" minWidth={116}>
+              {[89, 90, 93, 94].map((n) => (
+                <Affiche key={n} affiche={koAffiche(n)} />
+              ))}
+            </Column>
+            <Column label="Quarts" minWidth={116}>
+              {[97, 98].map((n) => (
+                <Affiche key={n} affiche={koAffiche(n)} />
+              ))}
+            </Column>
+            <Column label="Demies" minWidth={116}>
+              {[101].map((n) => (
+                <Affiche key={n} affiche={koAffiche(n)} />
+              ))}
+            </Column>
 
             {/* Centre */}
             <div className="flex min-w-[120px] flex-col items-center justify-center gap-3">
@@ -107,16 +135,30 @@ export default async function TableauPage() {
                 <br />
                 du monde
               </div>
-              <div className="h-12 w-full rounded-lg border-2 border-amber-400/40 bg-amber-400/5" />
+              <div className="w-full">
+                <Affiche affiche={koAffiche(104)} />
+              </div>
               <div className="text-[10px] uppercase tracking-wide text-slate-500">
                 Finale · 19 juil.
               </div>
             </div>
 
             {/* Demi-tableau droit */}
-            <Column label="Demies">{empties(1)}</Column>
-            <Column label="Quarts">{empties(2)}</Column>
-            <Column label="Huitièmes">{empties(4)}</Column>
+            <Column label="Demies" minWidth={116}>
+              {[102].map((n) => (
+                <Affiche key={n} affiche={koAffiche(n)} />
+              ))}
+            </Column>
+            <Column label="Quarts" minWidth={116}>
+              {[99, 100].map((n) => (
+                <Affiche key={n} affiche={koAffiche(n)} />
+              ))}
+            </Column>
+            <Column label="Huitièmes" minWidth={116}>
+              {[91, 92, 95, 96].map((n) => (
+                <Affiche key={n} affiche={koAffiche(n)} />
+              ))}
+            </Column>
             <Column label="Seizièmes" minWidth={132}>
               {right.map((s, i) => (
                 <Affiche key={i} affiche={s} />
@@ -146,15 +188,6 @@ export default async function TableauPage() {
       </Reveal>
     </div>
   );
-}
-
-function empties(n: number) {
-  return Array.from({ length: n }, (_, i) => (
-    <div
-      key={i}
-      className="h-10 w-full rounded-lg border border-dashed border-white/10 bg-white/[0.03]"
-    />
-  ));
 }
 
 function Column({
