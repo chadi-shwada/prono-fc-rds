@@ -486,6 +486,23 @@ async function getEspnMatchDetailDelayed(
 // instantané cohérent) par rendu.
 export const getEspnMatchDetail = cache(getEspnMatchDetailDelayed);
 
+/**
+ * Score du terrain (fin du temps réglementaire/prolongation, T.A.B. EXCLUS) d'un
+ * match d'après ESPN, pour la SYNCHRO. football-data plie les tirs au but dans son
+ * score et n'en fournit pas toujours le détail, ce qui regonfle le score du match
+ * (ex. 3-5 au lieu de 1-1). ESPN, lui, expose le score du terrain (`score`) à part
+ * des tirs au but (`shootout`). Lecture seule, best-effort : `null` si le match est
+ * introuvable côté ESPN ou en cas d'erreur (l'appelant garde alors son repli).
+ */
+export async function espnPitchScore(
+  homeCode: string,
+  awayCode: string,
+  kickoff: Date,
+): Promise<{ home: number; away: number } | null> {
+  const d = await fetchEspnMatchDetail(homeCode, awayCode, kickoff);
+  return d?.score ?? null;
+}
+
 /** Probabilité implicite (0–1) d'une cote moneyline américaine, sinon null. */
 function impliedFromMoneyline(ml: number | string | undefined): number | null {
   const n = Number(ml);
