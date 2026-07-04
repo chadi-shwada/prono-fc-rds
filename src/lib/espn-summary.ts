@@ -487,20 +487,24 @@ async function getEspnMatchDetailDelayed(
 export const getEspnMatchDetail = cache(getEspnMatchDetailDelayed);
 
 /**
- * Score du terrain (fin du temps réglementaire/prolongation, T.A.B. EXCLUS) d'un
- * match d'après ESPN, pour la SYNCHRO. football-data plie les tirs au but dans son
- * score et n'en fournit pas toujours le détail, ce qui regonfle le score du match
- * (ex. 3-5 au lieu de 1-1). ESPN, lui, expose le score du terrain (`score`) à part
- * des tirs au but (`shootout`). Lecture seule, best-effort : `null` si le match est
+ * Score du terrain (T.A.B. EXCLUS) + score des tirs au but d'un match, d'après
+ * ESPN, pour la SYNCHRO. football-data plie les tirs au but dans son score et n'en
+ * fournit pas toujours le détail, ce qui regonfle le score du match (ex. 3-5 au
+ * lieu de 1-1). ESPN, lui, expose le score du terrain (`score`) ET les tirs au but
+ * (`shootout`) séparément. Lecture seule, best-effort : `null` si le match est
  * introuvable côté ESPN ou en cas d'erreur (l'appelant garde alors son repli).
  */
-export async function espnPitchScore(
+export async function espnKnockoutScore(
   homeCode: string,
   awayCode: string,
   kickoff: Date,
-): Promise<{ home: number; away: number } | null> {
+): Promise<{
+  score: { home: number; away: number } | null;
+  shootout: { home: number; away: number } | null;
+} | null> {
   const d = await fetchEspnMatchDetail(homeCode, awayCode, kickoff);
-  return d?.score ?? null;
+  if (!d) return null;
+  return { score: d.score, shootout: d.shootout };
 }
 
 /** Probabilité implicite (0–1) d'une cote moneyline américaine, sinon null. */
