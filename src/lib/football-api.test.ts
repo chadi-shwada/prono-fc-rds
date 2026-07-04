@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { pitchScoreFromApi } from "./football-api";
+import { pitchScoreFromApi, pitchFromShootout } from "./football-api";
 
 // football-data plie les T.A.B. dans `fullTime`. Le barème doit noter le score
 // du terrain (fin du temps réglementaire/prolongation), pas l'issue des tirs au
@@ -78,5 +78,41 @@ test("pitchScoreFromApi : match non joué (scores null)", () => {
       fullTime: { home: null, away: null },
     }),
     { home: null, away: null },
+  );
+});
+
+// Bug prod « Australie 3-5 Égypte » : football-data regonfle le score avec les
+// T.A.B. sans fournir le détail `penalties`. On retrouve le score du terrain (nul)
+// en retranchant les tirs au but qu'ESPN fournit à part.
+test("pitchFromShootout : score regonflé − tirs au but ESPN = nul du terrain", () => {
+  assert.deepEqual(
+    pitchFromShootout(3, 5, {
+      score: { home: 1, away: 1 },
+      shootout: { home: 2, away: 4 },
+    }),
+    { home: 1, away: 1 },
+  );
+});
+
+test("pitchFromShootout : sans shootout ESPN, repli sur le score du terrain d'ESPN s'il est nul", () => {
+  assert.deepEqual(
+    pitchFromShootout(3, 5, { score: { home: 1, away: 1 }, shootout: null }),
+    { home: 1, away: 1 },
+  );
+});
+
+test("pitchFromShootout : soustraction non nulle rejetée (pas un nul) → null", () => {
+  // shootout incohérent avec un nul du terrain → on ne renvoie rien (repli appelant).
+  assert.equal(
+    pitchFromShootout(3, 5, { score: null, shootout: { home: 1, away: 4 } }),
+    null,
+  );
+});
+
+test("pitchFromShootout : rien d'exploitable côté ESPN → null", () => {
+  assert.equal(pitchFromShootout(3, 5, null), null);
+  assert.equal(
+    pitchFromShootout(3, 5, { score: { home: 2, away: 1 }, shootout: null }),
+    null,
   );
 });
