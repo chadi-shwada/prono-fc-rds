@@ -291,6 +291,36 @@ async function runSync(): Promise<SyncResult> {
       winnerTeamId = existing.winnerTeamId;
     }
 
+    // Match allé aux tirs au but : on GARDE le score du terrain, les T.A.B. sont
+    // affichés à part (via ESPN). football-data plie les tirs au but dans son score
+    // sans toujours en donner le détail `penalties`, ce qui le regonfle (ex. 3-5 au
+    // lieu de 1-1). Or un match aux T.A.B. est forcément nul sur le terrain : si le
+    // score calculé n'est pas nul, il est faux. On récupère alors le vrai score du
+    // terrain — d'abord le nul déjà enregistré (posé par ESPN au coup de sifflet),
+    // sinon ESPN qui sépare proprement score du terrain et tirs au but. Le vainqueur
+    // aux T.A.B. reste porté par `winnerTeamId`. Repli silencieux si ESPN n'a rien.
+    if (
+      m.score.duration === "PENALTY_SHOOTOUT" &&
+      homeScore != null &&
+      awayScore != null &&
+      homeScore !== awayScore
+    ) {
+      if (existing?.homeScore != null && existing.homeScore === existing.awayScore) {
+        homeScore = existing.homeScore;
+        awayScore = existing.awayScore;
+      } else if (m.homeTeam?.tla && m.awayTeam?.tla) {
+        // Import différé : `espn-summary` est `server-only` (indisponible hors
+        // runtime Next, ex. tests unitaires du score). On ne le charge qu'ici,
+        // au moment d'en avoir besoin, pour garder `football-api` testable.
+        const { espnPitchScore } = await import("@/lib/espn-summary");
+        const pitch = await espnPitchScore(m.homeTeam.tla, m.awayTeam.tla, kickoff);
+        if (pitch) {
+          homeScore = pitch.home;
+          awayScore = pitch.away;
+        }
+      }
+    }
+
     const fields = {
       stage,
       groupName: parseGroup(m.group),
