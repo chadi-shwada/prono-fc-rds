@@ -32,6 +32,21 @@ test("pitchScoreFromApi : exemple de la doc officielle (7-6 / 6-5 t.a.b.)", () =
   );
 });
 
+test("pitchScoreFromApi : fullTime SANS T.A.B. pliés (penalties à part) → pas de score négatif", () => {
+  // L'API n'est pas régulière : ici `fullTime` est déjà le score du terrain (1-1)
+  // et `penalties` (2-4) est fourni à part. Soustraire donnerait 1-2 = -1 (bug
+  // d'affichage « -1 - 1 »). On doit conserver le score du terrain tel quel.
+  assert.deepEqual(
+    pitchScoreFromApi({
+      winner: "AWAY_TEAM",
+      duration: "PENALTY_SHOOTOUT",
+      fullTime: { home: 1, away: 1 },
+      penalties: { home: 2, away: 4 },
+    }),
+    { home: 1, away: 1 },
+  );
+});
+
 test("pitchScoreFromApi : sans T.A.B., fullTime est déjà le bon score", () => {
   assert.deepEqual(
     pitchScoreFromApi({
