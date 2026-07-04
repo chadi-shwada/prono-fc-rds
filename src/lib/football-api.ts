@@ -82,6 +82,12 @@ type ApiMatch = {
  * l'issue des T.A.B. (le vainqueur des T.A.B. est porté par `winnerTeamId`). On
  * soustrait donc les penalties de `fullTime` (fullTime = réglementaire + prolong.
  * + penalties). Sans T.A.B., `fullTime` est déjà le bon score.
+ *
+ * ⚠️ L'API n'est PAS régulière : pour certains matchs `fullTime` contient déjà le
+ * score du terrain (ex. 1-1) et `penalties` (ex. 2-4) est fourni à part. Soustraire
+ * donne alors un score NÉGATIF (1-2 = -1) — d'où l'affichage « -1 - 1 » vu en prod.
+ * Un score de foot ne peut pas être négatif : si la soustraction passe sous zéro,
+ * c'est que `fullTime` n'incluait pas les T.A.B. → on le renvoie tel quel.
  */
 export function pitchScoreFromApi(score: ApiMatch["score"]): {
   home: number | null;
@@ -91,10 +97,13 @@ export function pitchScoreFromApi(score: ApiMatch["score"]): {
   if (fullTime.home == null || fullTime.away == null || !penalties) {
     return { home: fullTime.home, away: fullTime.away };
   }
-  return {
-    home: fullTime.home - (penalties.home ?? 0),
-    away: fullTime.away - (penalties.away ?? 0),
-  };
+  const home = fullTime.home - (penalties.home ?? 0);
+  const away = fullTime.away - (penalties.away ?? 0);
+  if (home < 0 || away < 0) {
+    // `fullTime` n'incluait pas les tirs au but → c'est déjà le score du terrain.
+    return { home: fullTime.home, away: fullTime.away };
+  }
+  return { home, away };
 }
 
 /** Minute de jeu en cours, ou null (hors match en direct / absente de l'API). */
