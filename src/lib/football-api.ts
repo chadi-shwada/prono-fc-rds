@@ -322,36 +322,69 @@ async function runSync(): Promise<SyncResult> {
       winnerTeamId = existing.winnerTeamId;
     }
 
-    // Match allé aux tirs au but : on GARDE le score du terrain, les T.A.B. sont
-    // affichés à part (via ESPN). football-data plie les tirs au but dans son score
-    // sans toujours en donner le détail `penalties`, ce qui le regonfle (ex. 3-5 au
-    // lieu de 1-1). Or un match aux T.A.B. est forcément nul sur le terrain : si le
-    // score calculé n'est pas nul, il est faux → on retrouve le vrai score du
-    // terrain (voir `pitchFromShootout`). Le vainqueur aux T.A.B. reste porté par
-    // `winnerTeamId`. Repli silencieux (score football-data) si ESPN n'a rien.
+    // Match à élimination allé aux tirs au but — football-data (plan gratuit) est
+    // incomplet sur les T.A.B., d'où deux corrections :
+    //   • SCORE : on garde le score du TERRAIN (forcément un nul ; les T.A.B. sont
+    //     affichés à part). football-data plie parfois les T.A.B. dans le score
+    //     (regonflé, ex. 3-5 au lieu de 1-1) → on le dégonfle.
+    //   • VAINQUEUR : football-data laisse parfois `winner` à null sur un 0-0 gagné
+    //     aux T.A.B. ; sans lui, le tableau ne fait pas avancer le qualifié. On
+    //     déduit alors le vainqueur du score des tirs au but (le plus haut gagne).
+    // Tirs au but : `penalties` de football-data si présent, sinon ESPN (qui les
+    // fournit à part). Repli silencieux si rien d'exploitable.
+    const pens = m.score.penalties;
+    const hasPens = !!pens && pens.home != null && pens.away != null;
     if (
-      /penalt/i.test(m.score.duration ?? "") &&
+      (hasPens || /penalt/i.test(m.score.duration ?? "")) &&
+      homeId &&
+      awayId &&
       homeScore != null &&
       awayScore != null &&
-      homeScore !== awayScore
+      (homeScore !== awayScore || winnerTeamId == null)
     ) {
-      if (existing?.homeScore != null && existing.homeScore === existing.awayScore) {
-        // Déjà corrigé (nul enregistré, ex. par ESPN au coup de sifflet) : on garde.
+      if (
+        existing?.status === MATCH_STATUS.FINISHED &&
+        existing.homeScore != null &&
+        existing.homeScore === existing.awayScore &&
+        existing.winnerTeamId != null
+      ) {
+        // Déjà corrigé (nul du terrain + vainqueur connu) : on garde, sans ESPN.
         homeScore = existing.homeScore;
         awayScore = existing.awayScore;
-      } else if (m.homeTeam?.tla && m.awayTeam?.tla) {
-        // Import différé : `espn-summary` est `server-only` (indisponible hors
-        // runtime Next, ex. tests unitaires du score). On ne le charge qu'ici.
-        const { espnKnockoutScore } = await import("@/lib/espn-summary");
-        const espn = await espnKnockoutScore(
-          m.homeTeam.tla,
-          m.awayTeam.tla,
-          kickoff,
-        );
-        const pitch = pitchFromShootout(homeScore, awayScore, espn);
-        if (pitch) {
-          homeScore = pitch.home;
-          awayScore = pitch.away;
+        winnerTeamId = existing.winnerTeamId;
+      } else {
+        let shootout = hasPens
+          ? { home: pens!.home!, away: pens!.away! }
+          : null;
+        let espnScore: { home: number; away: number } | null = null;
+        // ESPN seulement si football-data n'a pas les T.A.B. Import différé :
+        // `espn-summary` est `server-only` (indisponible hors runtime Next).
+        if (!shootout && m.homeTeam?.tla && m.awayTeam?.tla) {
+          const { espnKnockoutScore } = await import("@/lib/espn-summary");
+          const espn = await espnKnockoutScore(
+            m.homeTeam.tla,
+            m.awayTeam.tla,
+            kickoff,
+          );
+          if (espn) {
+            espnScore = espn.score;
+            shootout = espn.shootout;
+          }
+        }
+        // Score du terrain (nul) : on dégonfle si football-data l'avait regonflé.
+        if (homeScore !== awayScore) {
+          const pitch = pitchFromShootout(homeScore, awayScore, {
+            score: espnScore,
+            shootout,
+          });
+          if (pitch) {
+            homeScore = pitch.home;
+            awayScore = pitch.away;
+          }
+        }
+        // Vainqueur aux T.A.B. si football-data ne l'a pas donné (→ tableau avance).
+        if (winnerTeamId == null && shootout && shootout.home !== shootout.away) {
+          winnerTeamId = shootout.home > shootout.away ? homeId : awayId;
         }
       }
     }
